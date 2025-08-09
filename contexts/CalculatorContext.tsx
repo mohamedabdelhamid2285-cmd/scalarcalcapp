@@ -284,7 +284,19 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         // Log the math.js angle configuration right before evaluation
         console.log('Math.js config angle before evaluation:', math.config().angle);
 
-        let parsedExpression = math.parse(state.expression);
+        let parsedExpression;
+        try {
+          parsedExpression = math.parse(state.expression);
+        } catch (parseError: any) {
+          // Catch parsing errors (syntax errors)
+          console.error('Math parsing error:', parseError);
+          return {
+            ...state,
+            error: 'Syntax Error',
+            result: 'Error',
+            expression: '', // Clear expression on error
+          };
+        }
 
         // If in degree mode, transform the AST to ensure all trig function arguments are units
         if (angleUnitStr === 'deg') {
@@ -323,6 +335,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
           previousExpression: originalExpression, // Store the original expression
         };
       } catch (error) {
+        // Catch evaluation errors (math errors)
         console.error('Math evaluation error:', error);
         return {
           ...state,
