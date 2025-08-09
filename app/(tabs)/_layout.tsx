@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Calculator, ChartBar as BarChart3, Grid3x3, Navigation, Settings } from 'lucide-react-native';
 import { useColorScheme } from 'react-native';
+import { CalculatorProvider } from '@/contexts/CalculatorContext'; // Import CalculatorProvider
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -24,52 +25,54 @@ export default function TabLayout() {
   };
 
   return (
-    <Tabs screenOptions={tabBarOptions}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Calculator',
-          tabBarIcon: ({ size, color }) => (
-            <Calculator size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="matrix"
-        options={{
-          title: 'Matrix',
-          tabBarIcon: ({ size, color }) => (
-            <Grid3x3 size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="statistics"
-        options={{
-          title: 'Statistics',
-          tabBarIcon: ({ size, color }) => (
-            <BarChart3 size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="vector"
-        options={{
-          title: 'Vector',
-          tabBarIcon: ({ size, color }) => (
-            <Navigation size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ size, color }) => (
-            <Settings size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <CalculatorProvider> {/* Wrap Tabs with CalculatorProvider */}
+      <Tabs screenOptions={tabBarOptions}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Calculator',
+            tabBarIcon: ({ size, color }) => (
+              <Calculator size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="matrix"
+          options={{
+            title: 'Matrix',
+            tabBarIcon: ({ size, color }) => (
+              <Grid3x3 size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="statistics"
+          options={{
+            title: 'Statistics',
+            tabBarIcon: ({ size, color }) => (
+              <BarChart3 size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="vector"
+          options={{
+            title: 'Vector',
+            tabBarIcon: ({ size, color }) => (
+              <Navigation size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ size, color }) => (
+              <Settings size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </CalculatorProvider>
   );
 }

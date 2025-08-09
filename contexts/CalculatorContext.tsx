@@ -8,31 +8,35 @@ interface CalculatorState {
   history: { expression: string; result: string }[];
   error: string | null;
   angleUnit: 'deg' | 'rad'; // 'deg' for degrees, 'rad' for radians
-  lastInputType: 'number' | 'operator' | 'function' | 'parenthesis' | 'equals' | 'constant' | null;
-  theme: 'light' | 'dark'; // Added theme
-  memoryValue: number; // Added memory value
-  previousExpression: string; // To store the expression before equals was pressed
+  lastInputType: 'number' | 'operator' | 'function' | 'parenthesis' | 'equals' | null;
+  theme: 'light' | 'dark'; // Add theme to state
+  memoryValue: number; // Add memoryValue to state
+  shiftActive: boolean; // Add shiftActive state
+  alphaActive: boolean; // Add alphaActive state
+  storeActive: boolean; // Add storeActive state for STO mode
+  variables: { [key: string]: number }; // Store variables (A, B, C, X, Y)
 }
 
 type CalculatorAction =
   | { type: 'NUMBER_PRESS'; payload: string }
   | { type: 'OPERATOR_PRESS'; payload: string }
-  | { type: 'FUNCTION_PRESS'; payload: string } // For sin, cos, tan, log, sqrt, exp
-  | { type: 'CONSTANT_PRESS'; payload: string } // For pi, e
+  | { type: 'FUNCTION_PRESS'; payload: string }
   | { type: 'CLEAR' }
   | { type: 'DELETE' }
   | { type: 'EQUALS' }
   | { type: 'TOGGLE_SIGN' }
   | { type: 'TOGGLE_ANGLE_UNIT' }
   | { type: 'ADD_PARENTHESIS'; payload: '(' | ')' }
-  | { type: 'FACTORIAL_PRESS' } // For '!'
-  | { type: 'TOGGLE_THEME' } // New action for theme
-  | { type: 'SET_ANGLE_UNIT'; payload: 'deg' | 'rad' } // New action for angle unit
-  | { type: 'CLEAR_ALL' } // New action to clear all (history, expression, result)
-  | { type: 'MEMORY_CLEAR' } // New action for memory clear
-  | { type: 'MEMORY_ADD'; payload: number } // New action for memory add
-  | { type: 'MEMORY_SUBTRACT'; payload: number } // New action for memory subtract
-  | { type: 'MEMORY_RECALL' }; // New action for memory recall
+  | { type: 'TOGGLE_THEME' } // Action for theme toggling
+  | { type: 'SET_ANGLE_UNIT'; payload: 'deg' | 'rad' } // Action to set angle unit
+  | { type: 'MEMORY_STORE'; payload: string } // Action for memory store
+  | { type: 'MEMORY_RECALL' } // Action for memory recall
+  | { type: 'MEMORY_CLEAR' } // Action for memory clear
+  | { type: 'TOGGLE_SHIFT' } // Action for toggling shift mode
+  | { type: 'TOGGLE_ALPHA' } // Action for toggling alpha mode
+  | { type: 'TOGGLE_STORE' } // Action for toggling store mode
+  | { type: 'STORE_VARIABLE'; payload: { variableName: string; value: number } } // Action to store a variable
+  | { type: 'INSERT_VARIABLE'; payload: string }; // Action to insert a variable into expression
 
 const initialState: CalculatorState = {
   expression: '',
@@ -42,95 +46,113 @@ const initialState: CalculatorState = {
   angleUnit: 'deg', // Default to degrees
   lastInputType: null,
   theme: 'light', // Default theme
-  memoryValue: 0, // Initial memory value
-  previousExpression: '', // Initial previous expression
+  memoryValue: 0, // Default memory value
+  shiftActive: false, // Default shift state
+  alphaActive: false, // Default alpha state
+  storeActive: false, // Default store state
+  variables: {
+    'A': 0,
+    'B': 0,
+    'C': 0,
+    'X': 0,
+    'Y': 0,
+  },
 };
 
 // Helper function to check if a character is an operator
 const isOperator = (char: string) => ['+', '-', '*', '/', '%', '^'].includes(char);
 
-// Helper function to check if a character is a function (for parenthesis logic)
-const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log10', 'log', 'sqrt', 'exp'].includes(char);
+// Helper function to check if a character is a function
+const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log', 'sqrt', 'log10', 'pi', 'e'].includes(char);
 
 const calculatorReducer = (state: CalculatorState, action: CalculatorAction): CalculatorState => {
-  console.log('CalculatorReducer: Received action:', action);
+  // Reset alpha/store modes on most actions, unless it's a specific variable action
+  const resetModes = (currentState: CalculatorState) => {
+    if (action.type !== 'TOGGLE_ALPHA' && action.type !== 'TOGGLE_STORE' &&
+        action.type !== 'STORE_VARIABLE' && action.type !== 'INSERT_VARIABLE') {
+      return { ...currentState, alphaActive: false, storeActive: false };
+    }
+    return currentState;
+  };
+
+  let newState = state;
+
   switch (action.type) {
     case 'NUMBER_PRESS':
-      // Prevent multiple leading zeros unless it's a decimal
-      if (state.expression === '0' && action.payload !== '.') {
-        return { ...state, expression: action.payload, lastInputType: 'number', error: null };
-      }
-      // Prevent multiple decimals in a single number
-      if (action.payload === '.') {
-        const lastNumberMatch = state.expression.match(/(\d+\.?\d*)$/);
-        if (lastNumberMatch && lastNumberMatch[1].includes('.')) {
-          return state; // Already has a decimal
+      let newExpression = state.expression;
+      if (state.lastInputType === 'equals' || state.error) {
+        // If last action was equals or there was an error, start a new expression
+        newExpression = action.payload;
+      } else if (newExpression === '0' && action.payload !== '.') {
+        // Prevent multiple leading zeros unless it's a decimal
+        newExpression = action.payload;
+      } else if (action.payload === '.' && newExpression.includes('.') && state.lastInputType === 'number') {
+        // Prevent multiple decimals in a single number
+        const lastNumber = newExpression.split(/[\+\-\*\/%()^]/).pop();
+        if (lastNumber && lastNumber.includes('.')) {
+          return resetModes(state);
         }
+        newExpression += action.payload;
+      } else {
+        newExpression += action.payload;
       }
-      return {
+
+      newState = {
         ...state,
-        expression: state.expression + action.payload,
+        expression: newExpression,
         lastInputType: 'number',
         error: null,
       };
+      return resetModes(newState);
 
     case 'OPERATOR_PRESS':
+      let exprAfterOperator = state.expression;
+      if (state.lastInputType === 'equals' || state.error) {
+        // If last action was equals or there was an error, start with the result
+        exprAfterOperator = state.result;
+      }
+
       // Prevent adding an operator if the expression is empty and the operator is not '-'
-      if (state.expression === '' && action.payload !== '-') {
-        return state;
+      if (exprAfterOperator === '' && action.payload !== '-') {
+        return resetModes(state);
       }
 
       // If the last input was an operator, replace it with the new one (unless it's a double negative)
       if (state.lastInputType === 'operator') {
-        const lastChar = state.expression.slice(-1);
+        const lastChar = exprAfterOperator.slice(-1);
         if (isOperator(lastChar) && !(action.payload === '-' && lastChar === '-')) {
-          return {
+          newState = {
             ...state,
-            expression: state.expression.slice(0, -1) + action.payload,
+            expression: exprAfterOperator.slice(0, -1) + action.payload,
             lastInputType: 'operator',
             error: null,
           };
+          return resetModes(newState);
         }
       }
 
       // Prevent adding an operator right after an opening parenthesis
-      if (state.expression.endsWith('(') && isOperator(action.payload) && action.payload !== '-') {
-        return state;
+      if (exprAfterOperator.endsWith('(') && isOperator(action.payload) && action.payload !== '-') {
+        return resetModes(state);
       }
 
-      return {
+      newState = {
         ...state,
-        expression: state.expression + action.payload,
+        expression: exprAfterOperator + action.payload,
         lastInputType: 'operator',
         error: null,
       };
+      return resetModes(newState);
 
     case 'FUNCTION_PRESS':
       // Append the function name followed by an opening parenthesis
-      return {
+      newState = {
         ...state,
-        expression: state.expression + action.payload + '(',
+        expression: state.expression + action.payload,
         lastInputType: 'function',
         error: null,
       };
-
-    case 'CONSTANT_PRESS':
-      // Append the constant name
-      return {
-        ...state,
-        expression: state.expression + action.payload,
-        lastInputType: 'constant',
-        error: null,
-      };
-
-    case 'FACTORIAL_PRESS':
-      // Append '!' for factorial
-      return {
-        ...state,
-        expression: state.expression + '!',
-        lastInputType: 'operator', // Treat as an operator for input type tracking
-        error: null,
-      };
+      return resetModes(newState);
 
     case 'ADD_PARENTHESIS':
       const lastChar = state.expression.slice(-1);
@@ -140,38 +162,43 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       if (action.payload === '(') {
         // Allow opening parenthesis after operators, other opening parentheses, or at the start
         if (state.expression === '' || isOperator(lastChar) || lastChar === '(' || isFunction(lastChar)) {
-          return { ...state, expression: state.expression + '(', lastInputType: 'parenthesis', error: null };
+          newState = { ...state, expression: state.expression + '(', lastInputType: 'parenthesis', error: null };
+          return resetModes(newState);
         }
-        // Allow opening parenthesis after a number or closing parenthesis if the next operation is multiplication (implied)
+        // Allow opening parenthesis after a number if the next operation is multiplication (implied)
         if (/\d/.test(lastChar) || lastChar === ')') {
-          return { ...state, expression: state.expression + '* (', lastInputType: 'parenthesis', error: null };
+          newState = { ...state, expression: state.expression + '* (', lastInputType: 'parenthesis', error: null };
+          return resetModes(newState);
         }
       } else { // action.payload === ')'
         // Only allow closing parenthesis if there's an open one to close
         // and the last character is not an operator or another opening parenthesis
         if (openParenthesesCount > closeParenthesesCount && !isOperator(lastChar) && lastChar !== '(') {
-          return { ...state, expression: state.expression + ')', lastInputType: 'parenthesis', error: null };
+          newState = { ...state, expression: state.expression + ')', lastInputType: 'parenthesis', error: null };
+          return resetModes(newState);
         }
       }
-      return state; // Do nothing if the parenthesis placement is invalid
+      return resetModes(state); // Do nothing if the parenthesis placement is invalid
 
     case 'CLEAR':
-      // Preserve theme, angleUnit, and memoryValue when clearing the calculator
+      // Preserve theme, angleUnit, memoryValue, and variables
       return {
         ...initialState,
         theme: state.theme,
         angleUnit: state.angleUnit,
         memoryValue: state.memoryValue,
+        variables: state.variables, // Preserve variables on clear
       };
 
     case 'DELETE':
-      return {
+      newState = {
         ...state,
         expression: state.expression.slice(0, -1),
-        result: '0', // Reset result when deleting expression
+        result: '0', // Reset result when deleting
         error: null,
         lastInputType: state.expression.length > 1 ? (isOperator(state.expression.slice(-2, -1)) ? 'operator' : 'number') : null, // Simple heuristic
       };
+      return resetModes(newState);
 
     case 'TOGGLE_SIGN':
       // Find the last number or expression segment to toggle its sign
@@ -182,93 +209,127 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         const startIndex = lastNumberMatch.index!;
         const before = expression.substring(0, startIndex);
         const toggledNumber = parseFloat(lastNumber) * -1;
-        return {
+        newState = {
           ...state,
           expression: before + toggledNumber.toString(),
           error: null,
         };
+        return resetModes(newState);
       } else if (expression === '') {
-        return { ...state, expression: '-', lastInputType: 'operator', error: null };
+        newState = { ...state, expression: '-', lastInputType: 'operator', error: null };
+        return resetModes(newState);
       } else if (expression === '-') {
-        return { ...state, expression: '', lastInputType: null, error: null };
+        newState = { ...state, expression: '', lastInputType: null, error: null };
+        return resetModes(newState);
       }
-      return state; // If no number to toggle, do nothing
+      return resetModes(state); // If no number to toggle, do nothing
 
     case 'TOGGLE_ANGLE_UNIT':
-      return {
+      newState = {
         ...state,
         angleUnit: state.angleUnit === 'deg' ? 'rad' : 'deg',
         error: null,
       };
+      return resetModes(newState);
 
     case 'SET_ANGLE_UNIT':
-      return {
+      newState = {
         ...state,
         angleUnit: action.payload,
         error: null,
       };
+      return resetModes(newState);
 
     case 'TOGGLE_THEME':
       return {
         ...state,
         theme: state.theme === 'light' ? 'dark' : 'light',
+      };
+
+    case 'MEMORY_STORE':
+      try {
+        const math = create(all);
+        const valueToStore = math.evaluate(action.payload);
+        newState = {
+          ...state,
+          memoryValue: valueToStore,
+          error: null,
+        };
+        return resetModes(newState);
+      } catch (error) {
+        console.error('Memory store error:', error);
+        newState = {
+          ...state,
+          error: 'Memory Error',
+        };
+        return resetModes(newState);
+      }
+
+    case 'MEMORY_RECALL':
+      newState = {
+        ...state,
+        expression: state.expression + state.memoryValue.toString(),
+        lastInputType: 'number',
         error: null,
       };
-
-    case 'CLEAR_ALL':
-      return {
-        ...initialState,
-        theme: state.theme, // Preserve current theme
-        angleUnit: state.angleUnit, // Preserve current angle unit
-        memoryValue: state.memoryValue, // Preserve memory value
-      };
+      return resetModes(newState);
 
     case 'MEMORY_CLEAR':
-      return {
+      newState = {
         ...state,
         memoryValue: 0,
         error: null,
       };
+      return resetModes(newState);
 
-    case 'MEMORY_ADD':
-      try {
-        const valueToAdd = parseFloat(state.result);
-        if (isNaN(valueToAdd)) throw new Error('Invalid number for memory operation');
-        return {
-          ...state,
-          memoryValue: state.memoryValue + valueToAdd,
-          error: null,
-        };
-      } catch (e: any) {
-        return { ...state, error: 'Memory Error: ' + e.message };
-      }
-
-    case 'MEMORY_SUBTRACT':
-      try {
-        const valueToSubtract = parseFloat(state.result);
-        if (isNaN(valueToSubtract)) throw new Error('Invalid number for memory operation');
-        return {
-          ...state,
-          memoryValue: state.memoryValue - valueToSubtract,
-          error: null,
-        };
-      } catch (e: any) {
-        return { ...state, error: 'Memory Error: ' + e.message };
-      }
-
-    case 'MEMORY_RECALL':
+    case 'TOGGLE_SHIFT':
       return {
         ...state,
-        expression: state.memoryValue.toString(),
-        lastInputType: 'number',
+        shiftActive: !state.shiftActive,
         error: null,
       };
 
+    case 'TOGGLE_ALPHA':
+      return {
+        ...state,
+        alphaActive: !state.alphaActive,
+        storeActive: false, // Deactivate store mode when alpha is toggled
+        error: null,
+      };
+
+    case 'TOGGLE_STORE':
+      return {
+        ...state,
+        storeActive: !state.storeActive,
+        alphaActive: false, // Deactivate alpha mode when store is toggled
+        error: null,
+      };
+
+    case 'STORE_VARIABLE':
+      newState = {
+        ...state,
+        variables: {
+          ...state.variables,
+          [action.payload.variableName]: action.payload.value,
+        },
+        storeActive: false, // Exit store mode after storing
+        error: null,
+      };
+      return newState;
+
+    case 'INSERT_VARIABLE':
+      newState = {
+        ...state,
+        expression: state.expression + action.payload,
+        lastInputType: 'function', // Treat variable insertion like a function for input type
+        alphaActive: false, // Exit alpha mode after inserting
+        error: null,
+      };
+      return newState;
+
     case 'EQUALS':
       try {
-        if (!state.expression) return state;
-
-        const originalExpression = state.expression; // Capture original expression
+        if (!state.expression) return resetModes(state);
 
         // Ensure angleUnit is a string before comparison
         const angleUnitStr = typeof state.angleUnit === 'string' ? state.angleUnit.toLowerCase().trim() : '';
@@ -281,43 +342,22 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
           precision: 14,
         });
 
-        // Log the math.js angle configuration right before evaluation
-        console.log('Math.js config angle before evaluation:', math.config().angle);
-
-        let parsedExpression;
-        try {
-          parsedExpression = math.parse(state.expression);
-        } catch (parseError: any) {
-          // Catch parsing errors (syntax errors)
-          console.error('Math parsing error:', parseError);
-          return {
-            ...state,
-            error: 'Syntax Error',
-            result: 'Error',
-            expression: '', // Clear expression on error
-          };
-        }
-
-        // If in degree mode, transform the AST to ensure all trig function arguments are units
-        if (angleUnitStr === 'deg') {
-          const trigFunctions = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'csc', 'sec', 'cot'];
-
-          parsedExpression = parsedExpression.transform(function (node, path, parent) {
-            if (node.type === 'FunctionNode' && trigFunctions.includes(node.fn.name)) {
+        // AST transformation for trigonometric functions
+        const parseAndTransform = (expr: string, unit: 'deg' | 'rad') => {
+          const node = math.parse(expr);
+          return node.transform(function (node, path, parent) {
+            if (node.type === 'FunctionNode' && ['sin', 'cos', 'tan', 'asin', 'acos', 'atan'].includes(node.fn.name)) {
+              // Wrap the argument with a unit
               const arg = node.args[0];
-              // Only wrap if the argument is not already a UnitNode
-              if (arg && arg.type !== 'UnitNode') {
-                // Create a new UnitNode for the argument, effectively unit(arg, "deg")
-                // Use arg.toString() to get the string representation of the argument node
-                const unitNode = math.parse(`unit(${arg.toString()}, "deg")`);
-                return new math.FunctionNode(node.fn, [unitNode]);
-              }
+              return new math.FunctionNode(node.fn, [new math.FunctionNode(new math.SymbolNode('unit'), [arg, new math.ConstantNode(unit)])]);
             }
-            return node; // Return the node unchanged if not a trig function or already a unit
+            return node;
           });
-        }
+        };
 
-        const result = parsedExpression.evaluate(); // Evaluate the transformed AST
+        const transformedNode = parseAndTransform(state.expression, state.angleUnit);
+        // Pass the variables as scope to math.evaluate
+        const result = transformedNode.evaluate(state.variables);
         const formattedResult = math.format(result, { precision: 14 });
 
         const newHistory = [
@@ -325,28 +365,29 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
           { expression: state.expression, result: formattedResult }
         ];
 
-        return {
+        newState = {
           ...state,
           result: formattedResult,
+          expression: formattedResult, // Set expression to result for continued calculations
           history: newHistory,
           error: null,
-          lastInputType: 'equals',
-          expression: formattedResult, // Set expression to result for chaining operations
-          previousExpression: originalExpression, // Store the original expression
+          lastInputType: 'equals', // Mark last input as equals
         };
+        return resetModes(newState);
       } catch (error) {
-        // Catch evaluation errors (math errors)
         console.error('Math evaluation error:', error);
-        return {
+        newState = {
           ...state,
           error: 'Math Error',
           result: 'Error',
           expression: '', // Clear expression on error
+          lastInputType: null,
         };
+        return resetModes(newState);
       }
 
     default:
-      return state;
+      return resetModes(state);
   }
 };
 

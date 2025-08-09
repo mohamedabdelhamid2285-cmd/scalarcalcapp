@@ -16,22 +16,17 @@ export default function SettingsScreen() {
   const { state, dispatch } = useCalculator();
   const isDark = state.theme === 'dark';
 
-  // Debugging logs
-  console.log('SettingsScreen: Current state:', state);
-  console.log('SettingsScreen: memoryValue:', state.memoryValue);
-  console.log('SettingsScreen: Current theme:', state.theme); // Added log for theme
-
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
   const cardBgColor = isDark ? '#2A2A2A' : '#F8F9FA';
 
   const toggleTheme = () => {
-    console.log('SettingsScreen: Toggling theme'); // Added log for theme toggle
     dispatch({ type: 'TOGGLE_THEME' });
   };
 
   const clearHistory = () => {
-    dispatch({ type: 'CLEAR_ALL' }); // CLEAR_ALL will clear history, expression, result
+    // This would clear calculation history
+    dispatch({ type: 'CLEAR_ALL' });
   };
 
   return (
@@ -65,7 +60,7 @@ export default function SettingsScreen() {
                 Angle Unit
               </Text>
               <View style={styles.angleButtons}>
-                {(['deg', 'rad'] as const).map((unit) => (
+                {(['deg', 'rad', 'grad'] as const).map((unit) => (
                   <CalculatorButton
                     key={unit}
                     symbol={unit.toUpperCase()}
@@ -83,29 +78,13 @@ export default function SettingsScreen() {
             <Text style={[styles.cardTitle, { color: textColor }]}>Memory</Text>
             <View style={styles.settingRow}>
               <Text style={[styles.settingLabel, { color: textColor }]}>
-                Memory Value: {(state.memoryValue ?? 0).toFixed(2)}
               </Text>
             </View>
             <View style={styles.memoryButtons}>
               <CalculatorButton
-                symbol="MC"
+                symbol="Clear Memory"
                 type="clear"
                 onPress={() => dispatch({ type: 'MEMORY_CLEAR' })}
-              />
-              <CalculatorButton
-                symbol="M+"
-                type="function"
-                onPress={() => dispatch({ type: 'MEMORY_ADD', payload: parseFloat(state.result) || 0 })}
-              />
-              <CalculatorButton
-                symbol="M-"
-                type="function"
-                onPress={() => dispatch({ type: 'MEMORY_SUBTRACT', payload: parseFloat(state.result) || 0 })}
-              />
-              <CalculatorButton
-                symbol="MR"
-                type="function"
-                onPress={() => dispatch({ type: 'MEMORY_RECALL' })}
               />
             </View>
           </View>
@@ -213,9 +192,6 @@ const styles = StyleSheet.create({
   },
   memoryButtons: {
     marginTop: 8,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
   },
   historyList: {
     maxHeight: 150,

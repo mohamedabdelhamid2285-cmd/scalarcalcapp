@@ -24,7 +24,6 @@ export default function CalculatorButton({
   flex = 1,
   fontSize = 18,
 }: CalculatorButtonProps) {
-  console.log(`CalculatorButton: Rendering button for symbol: ${symbol}`); // Added log
   const { state } = useCalculator();
   const isDark = state.theme === 'dark';
 
@@ -70,8 +69,8 @@ export default function CalculatorButton({
     <TouchableOpacity
       style={buttonStyle}
       onPress={() => {
-        console.log(`CalculatorButton: ${symbol} pressed`);
-        onPress();
+        console.log(`CalculatorButton: ${symbol} pressed directly`); // Direct log for debugging
+        onPress(); // Call the original onPress prop
       }}
       activeOpacity={0.8}
     >

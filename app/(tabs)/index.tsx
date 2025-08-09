@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
   useColorScheme,
   SafeAreaView,
   StatusBar,
+  Text, // Import Text for the SHIFT indicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
@@ -12,14 +13,18 @@ import Display from '@/components/Display';
 import CalculatorButton from '@/components/CalculatorButton';
 
 export default function CalculatorScreen() {
-  console.log('CalculatorScreen: Rendering CalculatorScreen'); // Added log
   const { state, dispatch } = useCalculator();
   const isDark = state.theme === 'dark';
 
+  useEffect(() => {
+    console.log('CalculatorScreen: Component mounted/re-rendered');
+  }, [state.theme, state.shiftActive, state.alphaActive, state.storeActive]); // Log on initial mount, theme, and shift changes
+
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
+  const textColor = isDark ? '#FFFFFF' : '#1F2937';
 
   const handlePress = (action: any) => {
-    console.log('CalculatorScreen: Dispatching action:', action);
+    console.log('CalculatorScreen: handlePress called with action:', action); // Log when handlePress is triggered
     dispatch(action);
   };
 
@@ -40,13 +45,13 @@ export default function CalculatorScreen() {
           <View style={styles.row}>
             <CalculatorButton
               symbol="SHIFT"
-              type="function"
-              onPress={() => {}} // No functionality yet
+              type={state.shiftActive ? 'equals' : 'function'} // Highlight SHIFT when active
+              onPress={() => handlePress({ type: 'TOGGLE_SHIFT' })}
             />
             <CalculatorButton
               symbol="ALPHA"
-              type="function"
-              onPress={() => {}} // No functionality yet
+              type={state.alphaActive ? 'equals' : 'function'} // Highlight ALPHA when active
+              onPress={() => handlePress({ type: 'TOGGLE_ALPHA' })}
             />
             <CalculatorButton
               symbol={state.angleUnit.toUpperCase()}
@@ -68,58 +73,58 @@ export default function CalculatorScreen() {
           {/* Row 2: Advanced Functions */}
           <View style={styles.row}>
             <CalculatorButton
-              symbol="x²"
+              symbol={state.shiftActive ? 'x³' : 'x²'}
               type="function"
-              onPress={() => handlePress({ type: 'OPERATOR_PRESS', payload: '^2' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? '^3' : '^2' })}
             />
             <CalculatorButton
-              symbol="xʸ"
+              symbol={state.shiftActive ? 'y√x' : 'xʸ'}
               type="function"
-              onPress={() => handlePress({ type: 'OPERATOR_PRESS', payload: '^' })}
+              onPress={() => handlePress({ type: 'OPERATOR_PRESS', payload: state.shiftActive ? 'nthRoot(' : '^' })}
             />
             <CalculatorButton
-              symbol="sin"
+              symbol={state.shiftActive ? 'sin⁻¹' : 'sin'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sin' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? 'asin(' : 'sin(' })}
             />
             <CalculatorButton
-              symbol="cos"
+              symbol={state.shiftActive ? 'cos⁻¹' : 'cos'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'cos' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? 'acos(' : 'cos(' })}
             />
             <CalculatorButton
-              symbol="tan"
+              symbol={state.shiftActive ? 'tan⁻¹' : 'tan'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'tan' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? 'atan(' : 'tan(' })}
             />
           </View>
 
           {/* Row 3: More Functions */}
           <View style={styles.row}>
             <CalculatorButton
-              symbol="√"
+              symbol={state.shiftActive ? '³√x' : '√'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sqrt' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? 'cbrt(' : 'sqrt(' })}
             />
             <CalculatorButton
-              symbol="log"
+              symbol={state.shiftActive ? '10ˣ' : 'log'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log10' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? '10^' : 'log10(' })}
             />
             <CalculatorButton
-              symbol="ln"
+              symbol={state.shiftActive ? 'eˣ' : 'ln'}
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: state.shiftActive ? 'e^' : 'log(' })}
             />
             <CalculatorButton
               symbol="π"
               type="function"
-              onPress={() => handlePress({ type: 'CONSTANT_PRESS', payload: 'pi' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'pi' })}
             />
             <CalculatorButton
               symbol="e"
               type="function"
-              onPress={() => handlePress({ type: 'CONSTANT_PRESS', payload: 'e' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'e' })}
             />
           </View>
 
@@ -128,17 +133,17 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="MS"
               type="memory"
-              onPress={() => {}} // No functionality yet
+              onPress={() => handlePress({ type: 'MEMORY_STORE', payload: state.result })}
             />
             <CalculatorButton
               symbol="MR"
               type="memory"
-              onPress={() => {}} // No functionality yet
+              onPress={() => handlePress({ type: 'MEMORY_RECALL' })}
             />
             <CalculatorButton
               symbol="MC"
               type="memory"
-              onPress={() => {}} // No functionality yet
+              onPress={() => handlePress({ type: 'MEMORY_CLEAR' })}
             />
             <CalculatorButton
               symbol="DEL"
@@ -219,10 +224,14 @@ export default function CalculatorScreen() {
               onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '3' })}
             />
             <CalculatorButton
-              symbol="Ans"
+              symbol={state.alphaActive || state.storeActive ? 'A' : 'Ans'} // Display 'A' if alpha/store active
               type="function"
               onPress={() => {
-                if (state.result && state.result !== '0' && state.result !== 'Error') {
+                if (state.alphaActive) {
+                  handlePress({ type: 'INSERT_VARIABLE', payload: 'A' });
+                } else if (state.storeActive) {
+                  handlePress({ type: 'STORE_VARIABLE', payload: { variableName: 'A', value: parseFloat(state.result) } });
+                } else if (state.result) {
                   handlePress({ type: 'NUMBER_PRESS', payload: state.result });
                 }
               }}
@@ -251,17 +260,32 @@ export default function CalculatorScreen() {
               onPress={() => handlePress({ type: 'TOGGLE_SIGN' })}
             />
             <CalculatorButton
-              symbol="EXP"
-              type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'exp' })}
+              symbol="STO" // Replaced EXP with STO
+              type={state.storeActive ? 'equals' : 'function'} // Highlight STO when active
+              onPress={() => handlePress({ type: 'TOGGLE_STORE' })}
             />
             <CalculatorButton
               symbol="!"
               type="function"
-              onPress={() => handlePress({ type: 'FACTORIAL_PRESS' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: '!' })}
             />
           </View>
         </View>
+        {state.shiftActive && (
+          <View style={styles.shiftIndicatorContainer}>
+            <Text style={[styles.shiftIndicatorText, { color: textColor }]}>SHIFT</Text>
+          </View>
+        )}
+        {state.alphaActive && (
+          <View style={styles.alphaIndicatorContainer}>
+            <Text style={[styles.alphaIndicatorText, { color: textColor }]}>ALPHA</Text>
+          </View>
+        )}
+        {state.storeActive && (
+          <View style={styles.storeIndicatorContainer}>
+            <Text style={[styles.storeIndicatorText, { color: textColor }]}>STO</Text>
+          </View>
+        )}
       </LinearGradient>
     </SafeAreaView>
   );
@@ -282,5 +306,44 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flex: 1,
+  },
+  shiftIndicatorContainer: {
+    position: 'absolute',
+    top: 50, // Adjust as needed
+    left: 20, // Adjust as needed
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+  },
+  shiftIndicatorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  alphaIndicatorContainer: {
+    position: 'absolute',
+    top: 50, // Adjust as needed
+    left: 90, // Adjust to be next to SHIFT
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  alphaIndicatorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  storeIndicatorContainer: {
+    position: 'absolute',
+    top: 50, // Adjust as needed
+    left: 170, // Adjust to be next to ALPHA
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  storeIndicatorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

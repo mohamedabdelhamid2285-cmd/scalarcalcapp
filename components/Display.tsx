@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  useColorScheme,
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,12 +27,19 @@ export default function Display() {
         <Text style={[styles.angleUnit, { color: textColor }]}>
           {state.angleUnit.toUpperCase()}
         </Text>
-        {/* Assuming memoryValue will be added later, keeping this for future */}
-        {/* {state.memoryValue !== 0 && (
+        {state.memoryValue !== 0 && (
           <Text style={[styles.memoryIndicator, { color: '#10B981' }]}>
             M
           </Text>
-        )} */}
+        )}
+        {/* Display variable values for debugging/info */}
+        <View style={styles.variableDisplay}>
+          {Object.entries(state.variables).map(([key, value]) => (
+            <Text key={key} style={[styles.variableText, { color: expressionColor }]}>
+              {key}={value.toFixed(2)}
+            </Text>
+          ))}
+        </View>
       </View>
 
       <ScrollView
@@ -41,18 +47,15 @@ export default function Display() {
         contentContainerStyle={styles.displayContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* This line will show the full expression being built or the previous expression after equals */}
-        <Text style={[styles.expression, { color: expressionColor }]}>
-          {state.lastInputType === 'equals' ? state.previousExpression : state.expression}
-        </Text>
-        {/* This line will show the result if available, otherwise the current expression */}
+        {/* Display the current expression being typed */}
+        {state.expression !== '' && (
+          <Text style={[styles.expression, { color: expressionColor }]}>
+            {state.expression}
+          </Text>
+        )}
+        {/* Display the result or error */}
         <Text style={[styles.result, { color: state.error ? '#EF4444' : textColor }]}>
-          {state.error
-            ? state.error // If there's an error, show the error
-            : state.lastInputType === 'equals' || state.expression === '' // If equals was pressed, or expression is empty (initial state)
-              ? state.result // Show the result
-              : state.expression // Otherwise, show the current expression being typed
-          }
+          {state.error || state.result}
         </Text>
       </ScrollView>
     </LinearGradient>
@@ -84,6 +87,17 @@ const styles = StyleSheet.create({
   memoryIndicator: {
     fontSize: 14,
     fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  variableDisplay: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    flex: 1,
+  },
+  variableText: {
+    fontSize: 12,
+    marginLeft: 8,
   },
   displayArea: {
     flex: 1,
