@@ -1,0 +1,222 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  useColorScheme,
+  SafeAreaView,
+  ScrollView,
+  Switch,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useCalculator } from '@/contexts/CalculatorContext';
+import CalculatorButton from '@/components/CalculatorButton';
+
+export default function SettingsScreen() {
+  const { state, dispatch } = useCalculator();
+  const isDark = state.theme === 'dark';
+
+  const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
+  const textColor = isDark ? '#FFFFFF' : '#1F2937';
+  const cardBgColor = isDark ? '#2A2A2A' : '#F8F9FA';
+
+  const toggleTheme = () => {
+    dispatch({ type: 'TOGGLE_THEME' });
+  };
+
+  const clearHistory = () => {
+    // This would clear calculation history
+    dispatch({ type: 'CLEAR_ALL' });
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={backgroundColors} style={styles.container}>
+        <ScrollView style={styles.content}>
+          <Text style={[styles.title, { color: textColor }]}>Settings</Text>
+          
+          {/* Theme Settings */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>Appearance</Text>
+            
+            <View style={styles.settingRow}>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Dark Theme
+              </Text>
+              <Switch
+                value={state.theme === 'dark'}
+                onValueChange={toggleTheme}
+                trackColor={{ false: '#E0E0E0', true: '#3B82F6' }}
+                thumbColor={state.theme === 'dark' ? '#FFFFFF' : '#F4F3F4'}
+              />
+            </View>
+          </View>
+
+          {/* Calculation Settings */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>Calculation</Text>
+            <View style={styles.settingColumn}>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Angle Unit
+              </Text>
+              <View style={styles.angleButtons}>
+                {(['deg', 'rad', 'grad'] as const).map((unit) => (
+                  <CalculatorButton
+                    key={unit}
+                    symbol={unit.toUpperCase()}
+                    type={state.angleUnit === unit ? 'function' : 'digit'}
+                    onPress={() => {
+                      dispatch({ type: 'SET_ANGLE_UNIT', payload: unit });
+                    }}
+                  />
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>Memory</Text>
+            <View style={styles.settingRow}>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+              </Text>
+            </View>
+            <View style={styles.memoryButtons}>
+              <CalculatorButton
+                symbol="Clear Memory"
+                type="clear"
+                onPress={() => dispatch({ type: 'MEMORY_CLEAR' })}
+              />
+            </View>
+          </View>
+
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>History</Text>
+            <View style={styles.settingColumn}>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Calculation History ({state.history.length} entries)
+              </Text>
+              {state.history.length > 0 && (
+                <ScrollView style={styles.historyList} nestedScrollEnabled>
+                  {state.history.slice(-5).reverse().map((entry, index) => (
+                    <View key={index} style={styles.historyItem}>
+                      <Text style={[styles.historyExpression, { color: textColor }]}>
+                        {entry.expression}
+                      </Text>
+                      <Text style={[styles.historyResult, { color: '#3B82F6' }]}>
+                        = {entry.result}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+              <View style={styles.historyButtons}>
+                <CalculatorButton
+                  symbol="Clear History"
+                  type="clear"
+                  onPress={clearHistory}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* About */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>About ScalarCalc</Text>
+            <Text style={[styles.aboutText, { color: textColor }]}>
+              Version: 1.0.0
+            </Text>
+            <Text style={[styles.aboutText, { color: textColor }]}>
+              Advanced scientific calculator with 400+ mathematical functions
+            </Text>
+            <Text style={[styles.aboutText, { color: textColor }]}>
+              Supports matrices, vectors, statistics, and complex expressions
+            </Text>
+            <Text style={[styles.aboutText, { color: textColor }]}>
+              Built with React Native and Math.js
+            </Text>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  settingCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  settingColumn: {
+    gap: 12,
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  angleButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  memoryButtons: {
+    marginTop: 8,
+  },
+  historyList: {
+    maxHeight: 150,
+    marginVertical: 8,
+  },
+  historyItem: {
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+  },
+  historyExpression: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+  },
+  historyResult: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+  },
+  historyButtons: {
+    marginTop: 8,
+  },
+  aboutText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+});
