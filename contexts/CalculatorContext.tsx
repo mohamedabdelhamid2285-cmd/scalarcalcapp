@@ -11,6 +11,7 @@ interface CalculatorState {
   lastInputType: 'number' | 'operator' | 'function' | 'parenthesis' | 'equals' | 'constant' | null;
   theme: 'light' | 'dark'; // Added theme
   memoryValue: number; // Added memory value
+  previousExpression: string; // To store the expression before equals was pressed
 }
 
 type CalculatorAction =
@@ -42,6 +43,7 @@ const initialState: CalculatorState = {
   lastInputType: null,
   theme: 'light', // Default theme
   memoryValue: 0, // Initial memory value
+  previousExpression: '', // Initial previous expression
 };
 
 // Helper function to check if a character is an operator
@@ -266,6 +268,8 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       try {
         if (!state.expression) return state;
 
+        const originalExpression = state.expression; // Capture original expression
+
         // Ensure angleUnit is a string before comparison
         const angleUnitStr = typeof state.angleUnit === 'string' ? state.angleUnit.toLowerCase().trim() : '';
 
@@ -280,7 +284,21 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         // Log the math.js angle configuration right before evaluation
         console.log('Math.js config angle before evaluation:', math.config().angle);
 
-        const result = math.evaluate(state.expression);
+        let finalExpression = state.expression;
+
+        // Check if in degree mode and transform the expression
+        if (angleUnitStr === 'deg') {
+          // This regex finds common trig functions and wraps their numeric arguments in the unit() function
+          const trigFunctions = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'csc', 'sec', 'cot'];
+          trigFunctions.forEach(func => {
+            // Creates a regex like: /sin\(([\d.]+)\)/g
+            const regex = new RegExp(`${func}\\(([\\d.]+)\\)`, 'g');
+            // Replaces sin(90) with sin(unit(90, "deg"))
+            finalExpression = finalExpression.replace(regex, `${func}(unit($1, "deg"))`);
+          });
+        }
+
+        const result = math.evaluate(finalExpression);
         const formattedResult = math.format(result, { precision: 14 });
 
         const newHistory = [
@@ -295,6 +313,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
           error: null,
           lastInputType: 'equals',
           expression: formattedResult, // Set expression to result for chaining operations
+          previousExpression: originalExpression, // Store the original expression
         };
       } catch (error) {
         console.error('Math evaluation error:', error);

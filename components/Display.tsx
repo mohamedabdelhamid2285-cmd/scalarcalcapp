@@ -41,9 +41,9 @@ export default function Display() {
         contentContainerStyle={styles.displayContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* This line will show the full expression being built */}
+        {/* This line will show the full expression being built or the previous expression after equals */}
         <Text style={[styles.expression, { color: expressionColor }]}>
-          {state.expression}
+          {state.lastInputType === 'equals' ? state.previousExpression : state.expression}
         </Text>
         {/* This line will show the result if available, otherwise the current expression */}
         <Text style={[styles.result, { color: state.error ? '#EF4444' : textColor }]}>
