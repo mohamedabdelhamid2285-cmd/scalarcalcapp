@@ -12,12 +12,14 @@ import Display from '@/components/Display';
 import CalculatorButton from '@/components/CalculatorButton';
 
 export default function CalculatorScreen() {
+  console.log('CalculatorScreen: Rendering CalculatorScreen'); // Added log
   const { state, dispatch } = useCalculator();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
 
   const handlePress = (action: any) => {
+    console.log('CalculatorScreen: Dispatching action:', action);
     dispatch(action);
   };
 
@@ -39,12 +41,12 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="SHIFT"
               type="function"
-              onPress={() => {}}
+              onPress={() => {}} // No functionality yet
             />
             <CalculatorButton
               symbol="ALPHA"
               type="function"
-              onPress={() => {}}
+              onPress={() => {}} // No functionality yet
             />
             <CalculatorButton
               symbol={state.angleUnit.toUpperCase()}
@@ -54,12 +56,12 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="("
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: '(' })}
+              onPress={() => handlePress({ type: 'ADD_PARENTHESIS', payload: '(' })}
             />
             <CalculatorButton
               symbol=")"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: ')' })}
+              onPress={() => handlePress({ type: 'ADD_PARENTHESIS', payload: ')' })}
             />
           </View>
 
@@ -68,7 +70,7 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="x²"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: '^2' })}
+              onPress={() => handlePress({ type: 'OPERATOR_PRESS', payload: '^2' })}
             />
             <CalculatorButton
               symbol="xʸ"
@@ -78,17 +80,17 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="sin"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sin(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sin' })}
             />
             <CalculatorButton
               symbol="cos"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'cos(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'cos' })}
             />
             <CalculatorButton
               symbol="tan"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'tan(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'tan' })}
             />
           </View>
 
@@ -97,27 +99,27 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="√"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sqrt(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'sqrt' })}
             />
             <CalculatorButton
               symbol="log"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log10(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log10' })}
             />
             <CalculatorButton
               symbol="ln"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log(' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'log' })}
             />
             <CalculatorButton
               symbol="π"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'pi' })}
+              onPress={() => handlePress({ type: 'CONSTANT_PRESS', payload: 'pi' })}
             />
             <CalculatorButton
               symbol="e"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'e' })}
+              onPress={() => handlePress({ type: 'CONSTANT_PRESS', payload: 'e' })}
             />
           </View>
 
@@ -126,27 +128,27 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="MS"
               type="memory"
-              onPress={() => handlePress({ type: 'MEMORY_STORE' })}
+              onPress={() => {}} // No functionality yet
             />
             <CalculatorButton
               symbol="MR"
               type="memory"
-              onPress={() => handlePress({ type: 'MEMORY_RECALL' })}
+              onPress={() => {}} // No functionality yet
             />
             <CalculatorButton
               symbol="MC"
               type="memory"
-              onPress={() => handlePress({ type: 'MEMORY_CLEAR' })}
+              onPress={() => {}} // No functionality yet
             />
             <CalculatorButton
               symbol="DEL"
               type="clear"
-              onPress={() => handlePress({ type: 'BACKSPACE' })}
+              onPress={() => handlePress({ type: 'DELETE' })}
             />
             <CalculatorButton
               symbol="AC"
               type="clear"
-              onPress={() => handlePress({ type: 'CLEAR_ALL' })}
+              onPress={() => handlePress({ type: 'CLEAR' })}
             />
           </View>
 
@@ -154,15 +156,15 @@ export default function CalculatorScreen() {
           <View style={styles.row}>
             <CalculatorButton
               symbol="7"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '7' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '7' })}
             />
             <CalculatorButton
               symbol="8"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '8' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '8' })}
             />
             <CalculatorButton
               symbol="9"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '9' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '9' })}
             />
             <CalculatorButton
               symbol="×"
@@ -180,15 +182,15 @@ export default function CalculatorScreen() {
           <View style={styles.row}>
             <CalculatorButton
               symbol="4"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '4' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '4' })}
             />
             <CalculatorButton
               symbol="5"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '5' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '5' })}
             />
             <CalculatorButton
               symbol="6"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '6' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '6' })}
             />
             <CalculatorButton
               symbol="+"
@@ -206,22 +208,22 @@ export default function CalculatorScreen() {
           <View style={styles.row}>
             <CalculatorButton
               symbol="1"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '1' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '1' })}
             />
             <CalculatorButton
               symbol="2"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '2' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '2' })}
             />
             <CalculatorButton
               symbol="3"
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '3' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '3' })}
             />
             <CalculatorButton
               symbol="Ans"
               type="function"
               onPress={() => {
-                if (state.result) {
-                  handlePress({ type: 'FUNCTION_PRESS', payload: state.result });
+                if (state.result && state.result !== '0' && state.result !== 'Error') {
+                  handlePress({ type: 'NUMBER_PRESS', payload: state.result });
                 }
               }}
             />
@@ -237,11 +239,11 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="0"
               flex={2}
-              onPress={() => handlePress({ type: 'DIGIT_PRESS', payload: '0' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '0' })}
             />
             <CalculatorButton
               symbol="."
-              onPress={() => handlePress({ type: 'DECIMAL_PRESS' })}
+              onPress={() => handlePress({ type: 'NUMBER_PRESS', payload: '.' })}
             />
             <CalculatorButton
               symbol="+/-"
@@ -251,12 +253,12 @@ export default function CalculatorScreen() {
             <CalculatorButton
               symbol="EXP"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'e^' })}
+              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: 'exp' })}
             />
             <CalculatorButton
               symbol="!"
               type="function"
-              onPress={() => handlePress({ type: 'FUNCTION_PRESS', payload: '!' })}
+              onPress={() => handlePress({ type: 'FACTORIAL_PRESS' })}
             />
           </View>
         </View>

@@ -1,140 +1,160 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { create, all } from 'mathjs';
 
-export interface CalculatorState {
+// Define the state and action types for the calculator
+interface CalculatorState {
   expression: string;
-  display: string;
   result: string;
-  angleUnit: 'deg' | 'rad' | 'grad';
-  memoryValue: number;
-  history: Array<{ expression: string; result: string }>;
-  theme: 'light' | 'dark';
+  history: { expression: string; result: string }[];
   error: string | null;
+  angleUnit: 'deg' | 'rad'; // 'deg' for degrees, 'rad' for radians
+  lastInputType: 'number' | 'operator' | 'function' | 'parenthesis' | 'equals' | 'constant' | null;
+  theme: 'light' | 'dark'; // Added theme
+  memoryValue: number; // Added memory value
 }
 
-export type CalculatorAction =
-  | { type: 'DIGIT_PRESS'; payload: string }
+type CalculatorAction =
+  | { type: 'NUMBER_PRESS'; payload: string }
   | { type: 'OPERATOR_PRESS'; payload: string }
-  | { type: 'FUNCTION_PRESS'; payload: string }
-  | { type: 'DECIMAL_PRESS' }
-  | { type: 'BACKSPACE' }
+  | { type: 'FUNCTION_PRESS'; payload: string } // For sin, cos, tan, log, sqrt, exp
+  | { type: 'CONSTANT_PRESS'; payload: string } // For pi, e
   | { type: 'CLEAR' }
-  | { type: 'CLEAR_ALL' }
+  | { type: 'DELETE' }
   | { type: 'EQUALS' }
-  | { type: 'TOGGLE_ANGLE_UNIT' }
-  | { type: 'SET_ANGLE_UNIT'; payload: 'deg' | 'rad' | 'grad' }
-  | { type: 'MEMORY_STORE' }
-  | { type: 'MEMORY_RECALL' }
-  | { type: 'MEMORY_CLEAR' }
-  | { type: 'TOGGLE_THEME' }
   | { type: 'TOGGLE_SIGN' }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'TOGGLE_ANGLE_UNIT' }
+  | { type: 'ADD_PARENTHESIS'; payload: '(' | ')' }
+  | { type: 'FACTORIAL_PRESS' } // For '!'
+  | { type: 'TOGGLE_THEME' } // New action for theme
+  | { type: 'SET_ANGLE_UNIT'; payload: 'deg' | 'rad' } // New action for angle unit
+  | { type: 'CLEAR_ALL' } // New action to clear all (history, expression, result)
+  | { type: 'MEMORY_CLEAR' } // New action for memory clear
+  | { type: 'MEMORY_ADD'; payload: number } // New action for memory add
+  | { type: 'MEMORY_SUBTRACT'; payload: number } // New action for memory subtract
+  | { type: 'MEMORY_RECALL' }; // New action for memory recall
 
 const initialState: CalculatorState = {
   expression: '',
-  display: '0',
-  result: '',
-  angleUnit: 'deg',
-  memoryValue: 0,
+  result: '0',
   history: [],
-  theme: 'dark',
   error: null,
+  angleUnit: 'deg', // Default to degrees
+  lastInputType: null,
+  theme: 'light', // Default theme
+  memoryValue: 0, // Initial memory value
 };
 
-function calculatorReducer(state: CalculatorState, action: CalculatorAction): CalculatorState {
+// Helper function to check if a character is an operator
+const isOperator = (char: string) => ['+', '-', '*', '/', '%', '^'].includes(char);
+
+// Helper function to check if a character is a function (for parenthesis logic)
+const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log10', 'log', 'sqrt', 'exp'].includes(char);
+
+const calculatorReducer = (state: CalculatorState, action: CalculatorAction): CalculatorState => {
+  console.log('CalculatorReducer: Received action:', action);
   switch (action.type) {
-    case 'DIGIT_PRESS':
-      const newExpression = state.display === '0' ? action.payload : state.expression + action.payload;
+    case 'NUMBER_PRESS':
+      // Prevent multiple leading zeros unless it's a decimal
+      if (state.expression === '0' && action.payload !== '.') {
+        return { ...state, expression: action.payload, lastInputType: 'number', error: null };
+      }
+      // Prevent multiple decimals in a single number
+      if (action.payload === '.') {
+        const lastNumberMatch = state.expression.match(/(\d+\.?\d*)$/);
+        if (lastNumberMatch && lastNumberMatch[1].includes('.')) {
+          return state; // Already has a decimal
+        }
+      }
       return {
         ...state,
-        expression: newExpression,
-        display: formatDisplay(newExpression),
+        expression: state.expression + action.payload,
+        lastInputType: 'number',
         error: null,
       };
 
     case 'OPERATOR_PRESS':
-      const internalOperators = ['+', '-', '*', '/'];
-      const currentExpression = state.expression;
-      const newOperator = action.payload;
-
-      if (currentExpression.length === 0 && (newOperator === '*' || newOperator === '/')) {
+      // Prevent adding an operator if the expression is empty and the operator is not '-'
+      if (state.expression === '' && action.payload !== '-') {
         return state;
       }
 
-      if (currentExpression.length > 0) {
-        const lastChar = currentExpression.slice(-1);
-
-        if (internalOperators.includes(lastChar)) {
-          const updatedExpression = currentExpression.slice(0, -1) + newOperator;
+      // If the last input was an operator, replace it with the new one (unless it's a double negative)
+      if (state.lastInputType === 'operator') {
+        const lastChar = state.expression.slice(-1);
+        if (isOperator(lastChar) && !(action.payload === '-' && lastChar === '-')) {
           return {
             ...state,
-            expression: updatedExpression,
-            display: formatDisplay(updatedExpression),
+            expression: state.expression.slice(0, -1) + action.payload,
+            lastInputType: 'operator',
             error: null,
           };
         }
       }
 
+      // Prevent adding an operator right after an opening parenthesis
+      if (state.expression.endsWith('(') && isOperator(action.payload) && action.payload !== '-') {
+        return state;
+      }
+
       return {
         ...state,
-        expression: currentExpression + newOperator,
-        display: formatDisplay(currentExpression + newOperator),
+        expression: state.expression + action.payload,
+        lastInputType: 'operator',
         error: null,
       };
 
     case 'FUNCTION_PRESS':
-      const funcExpression = state.expression + action.payload;
+      // Append the function name followed by an opening parenthesis
       return {
         ...state,
-        expression: funcExpression,
-        display: formatDisplay(funcExpression),
+        expression: state.expression + action.payload + '(',
+        lastInputType: 'function',
         error: null,
       };
 
-    case 'DECIMAL_PRESS':
-      const lastNumberMatch = state.expression.match(/(\d+\.?\d*)$/);
-      if (lastNumberMatch && lastNumberMatch[0].includes('.')) {
-        return state;
-      }
-      if (state.expression === '' || state.expression.match(/[\+\-\*\/]$/)) {
-        const decimalExpression = state.expression + '0.';
-        return {
-          ...state,
-          expression: decimalExpression,
-          display: formatDisplay(decimalExpression),
-          error: null,
-        };
-      }
-      const decimalExpression = state.expression + '.';
+    case 'CONSTANT_PRESS':
+      // Append the constant name
       return {
         ...state,
-        expression: decimalExpression,
-        display: formatDisplay(decimalExpression),
+        expression: state.expression + action.payload,
+        lastInputType: 'constant',
         error: null,
       };
 
-    case 'BACKSPACE':
-      if (state.expression.length > 0) {
-        const backspaceExpression = state.expression.slice(0, -1);
-        return {
-          ...state,
-          expression: backspaceExpression,
-          display: backspaceExpression || '0',
-          error: null,
-        };
+    case 'FACTORIAL_PRESS':
+      // Append '!' for factorial
+      return {
+        ...state,
+        expression: state.expression + '!',
+        lastInputType: 'operator', // Treat as an operator for input type tracking
+        error: null,
+      };
+
+    case 'ADD_PARENTHESIS':
+      const lastChar = state.expression.slice(-1);
+      const openParenthesesCount = (state.expression.match(/\(/g) || []).length;
+      const closeParenthesesCount = (state.expression.match(/\)/g) || []).length;
+
+      if (action.payload === '(') {
+        // Allow opening parenthesis after operators, other opening parentheses, or at the start
+        if (state.expression === '' || isOperator(lastChar) || lastChar === '(' || isFunction(lastChar)) {
+          return { ...state, expression: state.expression + '(', lastInputType: 'parenthesis', error: null };
+        }
+        // Allow opening parenthesis after a number or closing parenthesis if the next operation is multiplication (implied)
+        if (/\d/.test(lastChar) || lastChar === ')') {
+          return { ...state, expression: state.expression + '* (', lastInputType: 'parenthesis', error: null };
+        }
+      } else { // action.payload === ')'
+        // Only allow closing parenthesis if there's an open one to close
+        // and the last character is not an operator or another opening parenthesis
+        if (openParenthesesCount > closeParenthesesCount && !isOperator(lastChar) && lastChar !== '(') {
+          return { ...state, expression: state.expression + ')', lastInputType: 'parenthesis', error: null };
+        }
       }
-      return state;
+      return state; // Do nothing if the parenthesis placement is invalid
 
     case 'CLEAR':
-      return {
-        ...state,
-        expression: '',
-        display: '0',
-        result: '',
-        error: null,
-      };
-
-    case 'CLEAR_ALL':
+      // Preserve theme, angleUnit, and memoryValue when clearing the calculator
       return {
         ...initialState,
         theme: state.theme,
@@ -142,29 +162,126 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
         memoryValue: state.memoryValue,
       };
 
+    case 'DELETE':
+      return {
+        ...state,
+        expression: state.expression.slice(0, -1),
+        result: '0', // Reset result when deleting expression
+        error: null,
+        lastInputType: state.expression.length > 1 ? (isOperator(state.expression.slice(-2, -1)) ? 'operator' : 'number') : null, // Simple heuristic
+      };
+
+    case 'TOGGLE_SIGN':
+      // Find the last number or expression segment to toggle its sign
+      const expression = state.expression;
+      const lastNumberMatch = expression.match(/(\d+\.?\d*)$/); // Matches last number
+      if (lastNumberMatch) {
+        const lastNumber = lastNumberMatch[1];
+        const startIndex = lastNumberMatch.index!;
+        const before = expression.substring(0, startIndex);
+        const toggledNumber = parseFloat(lastNumber) * -1;
+        return {
+          ...state,
+          expression: before + toggledNumber.toString(),
+          error: null,
+        };
+      } else if (expression === '') {
+        return { ...state, expression: '-', lastInputType: 'operator', error: null };
+      } else if (expression === '-') {
+        return { ...state, expression: '', lastInputType: null, error: null };
+      }
+      return state; // If no number to toggle, do nothing
+
+    case 'TOGGLE_ANGLE_UNIT':
+      return {
+        ...state,
+        angleUnit: state.angleUnit === 'deg' ? 'rad' : 'deg',
+        error: null,
+      };
+
+    case 'SET_ANGLE_UNIT':
+      return {
+        ...state,
+        angleUnit: action.payload,
+        error: null,
+      };
+
+    case 'TOGGLE_THEME':
+      return {
+        ...state,
+        theme: state.theme === 'light' ? 'dark' : 'light',
+        error: null,
+      };
+
+    case 'CLEAR_ALL':
+      return {
+        ...initialState,
+        theme: state.theme, // Preserve current theme
+        angleUnit: state.angleUnit, // Preserve current angle unit
+        memoryValue: state.memoryValue, // Preserve memory value
+      };
+
+    case 'MEMORY_CLEAR':
+      return {
+        ...state,
+        memoryValue: 0,
+        error: null,
+      };
+
+    case 'MEMORY_ADD':
+      try {
+        const valueToAdd = parseFloat(state.result);
+        if (isNaN(valueToAdd)) throw new Error('Invalid number for memory operation');
+        return {
+          ...state,
+          memoryValue: state.memoryValue + valueToAdd,
+          error: null,
+        };
+      } catch (e: any) {
+        return { ...state, error: 'Memory Error: ' + e.message };
+      }
+
+    case 'MEMORY_SUBTRACT':
+      try {
+        const valueToSubtract = parseFloat(state.result);
+        if (isNaN(valueToSubtract)) throw new Error('Invalid number for memory operation');
+        return {
+          ...state,
+          memoryValue: state.memoryValue - valueToSubtract,
+          error: null,
+        };
+      } catch (e: any) {
+        return { ...state, error: 'Memory Error: ' + e.message };
+      }
+
+    case 'MEMORY_RECALL':
+      return {
+        ...state,
+        expression: state.memoryValue.toString(),
+        lastInputType: 'number',
+        error: null,
+      };
+
     case 'EQUALS':
       try {
         if (!state.expression) return state;
 
-        // LOG #1: Check if the correct angle unit is reaching the reducer
-        console.log(`Reducer received: expression='${state.expression}', angleUnit='${state.angleUnit}'`);
+        // Ensure angleUnit is a string before comparison
+        const angleUnitStr = typeof state.angleUnit === 'string' ? state.angleUnit.toLowerCase().trim() : '';
 
         // Create a math.js instance and configure it with the current angle unit
         const math = create(all);
         math.config({
-          angle: state.angleUnit,
+          angle: angleUnitStr === 'deg' ? 'deg' : 'rad', //Explicitly set to 'deg' or 'rad'
           number: 'BigNumber',
           precision: 14,
         });
 
-        // LOG #2: Verify math.js configuration (optional, but good for deep dives)
-        console.log('Math.js angle config:', math.config().angle);
+        // Log the math.js angle configuration right before evaluation
+        console.log('Math.js config angle before evaluation:', math.config().angle);
 
-        const result = math.evaluate(state.expression); // Evaluate the original expression
-        const formattedResult = math.format(result, { precision: 14 }); // Use math.format
-
-        // LOG #3: Check the result before storing
-        console.log('Evaluated result:', formattedResult);
+        const result = math.evaluate(state.expression);
+        const formattedResult = math.format(result, { precision: 14 });
 
         const newHistory = [
           ...state.history.slice(-9),
@@ -176,136 +293,36 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
           result: formattedResult,
           history: newHistory,
           error: null,
+          lastInputType: 'equals',
+          expression: formattedResult, // Set expression to result for chaining operations
         };
       } catch (error) {
-        console.error('Math evaluation error:', error); // Log the actual error
+        console.error('Math evaluation error:', error);
         return {
           ...state,
           error: 'Math Error',
           result: 'Error',
+          expression: '', // Clear expression on error
         };
       }
-
-    case 'TOGGLE_ANGLE_UNIT':
-      const angleUnits: Array<'deg' | 'rad' | 'grad'> = ['deg', 'rad', 'grad'];
-      const currentIndex = angleUnits.indexOf(state.angleUnit);
-      const nextIndex = (currentIndex + 1) % angleUnits.length;
-      return {
-        ...state,
-        angleUnit: angleUnits[nextIndex],
-      };
-
-    case 'SET_ANGLE_UNIT':
-      return {
-        ...state,
-        angleUnit: action.payload,
-      };
-
-    case 'MEMORY_STORE':
-      try {
-        const value = state.result ? parseFloat(state.result) : 0;
-        return {
-          ...state,
-          memoryValue: value,
-        };
-      } catch {
-        return state;
-      }
-
-    case 'MEMORY_RECALL':
-      return {
-        ...state,
-        expression: state.expression + state.memoryValue.toString(),
-        display: formatDisplay(state.expression + state.memoryValue.toString()),
-      };
-
-    case 'MEMORY_CLEAR':
-      return {
-        ...state,
-        memoryValue: 0,
-      };
-
-    case 'TOGGLE_THEME':
-      return {
-        ...state,
-        theme: state.theme === 'light' ? 'dark' : 'light',
-      };
-
-    case 'TOGGLE_SIGN':
-      if (state.expression === '' || state.expression === '0') {
-        return state;
-      }
-
-      const lastNumberRegex = /(-?\d+\.?\d*)$/;
-      const match = state.expression.match(lastNumberRegex);
-
-      if (match) {
-        const lastNumberStr = match[1];
-        const prefix = state.expression.substring(0, match.index);
-
-        if (lastNumberStr.startsWith('-')) {
-          const newExpression = prefix + lastNumberStr.substring(1);
-          return {
-            ...state,
-            expression: newExpression,
-            display: formatDisplay(newExpression),
-            error: null,
-          };
-        } else {
-          const charBefore = prefix.slice(-1);
-          if (charBefore === '+' || charBefore === '-' || charBefore === '*' || charBefore === '/' || charBefore === '(' || prefix === '') {
-            const newExpression = prefix + '-' + lastNumberStr;
-            return {
-              ...state,
-              expression: newExpression,
-              display: formatDisplay(newExpression),
-              error: null,
-            };
-          } else {
-            const newExpression = prefix + '(-' + lastNumberStr + ')';
-            return {
-              ...state,
-              expression: newExpression,
-              display: formatDisplay(newExpression),
-              error: null,
-            };
-          }
-        }
-      } else {
-        const newExpression = state.expression + '-';
-        return {
-          ...state,
-          expression: newExpression,
-          display: formatDisplay(newExpression),
-          error: null,
-        };
-      }
-
-    case 'SET_ERROR':
-      return {
-        ...state,
-        error: action.payload,
-      };
 
     default:
       return state;
   }
-}
+};
 
-function formatDisplay(expression: string): string {
-  return expression
-    .replace(/\*/g, '×')
-    .replace(/\//g, '÷')
-    .replace(/sqrt\(/g, '√(')
-    .replace(/\^/g, '^');
-}
-
-const CalculatorContext = createContext<{
+interface CalculatorContextType {
   state: CalculatorState;
   dispatch: React.Dispatch<CalculatorAction>;
-} | null>(null);
+}
 
-export function CalculatorProvider({ children }: { children: ReactNode }) {
+const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
+
+interface CalculatorProviderProps {
+  children: ReactNode;
+}
+
+export const CalculatorProvider: React.FC<CalculatorProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(calculatorReducer, initialState);
 
   return (
@@ -313,12 +330,12 @@ export function CalculatorProvider({ children }: { children: ReactNode }) {
       {children}
     </CalculatorContext.Provider>
   );
-}
+};
 
-export function useCalculator() {
+export const useCalculator = () => {
   const context = useContext(CalculatorContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCalculator must be used within a CalculatorProvider');
   }
   return context;
-}
+};

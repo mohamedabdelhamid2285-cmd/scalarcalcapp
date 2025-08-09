@@ -28,11 +28,12 @@ export default function Display() {
         <Text style={[styles.angleUnit, { color: textColor }]}>
           {state.angleUnit.toUpperCase()}
         </Text>
-        {state.memoryValue !== 0 && (
+        {/* Assuming memoryValue will be added later, keeping this for future */}
+        {/* {state.memoryValue !== 0 && (
           <Text style={[styles.memoryIndicator, { color: '#10B981' }]}>
             M
           </Text>
-        )}
+        )} */}
       </View>
 
       <ScrollView
@@ -40,13 +41,18 @@ export default function Display() {
         contentContainerStyle={styles.displayContent}
         showsVerticalScrollIndicator={false}
       >
-        {state.expression && (
-          <Text style={[styles.expression, { color: expressionColor }]}>
-            {state.display}
-          </Text>
-        )}
+        {/* This line will show the full expression being built */}
+        <Text style={[styles.expression, { color: expressionColor }]}>
+          {state.expression}
+        </Text>
+        {/* This line will show the result if available, otherwise the current expression */}
         <Text style={[styles.result, { color: state.error ? '#EF4444' : textColor }]}>
-          {state.error || state.result || state.display}
+          {state.error
+            ? state.error // If there's an error, show the error
+            : state.lastInputType === 'equals' || state.expression === '' // If equals was pressed, or expression is empty (initial state)
+              ? state.result // Show the result
+              : state.expression // Otherwise, show the current expression being typed
+          }
         </Text>
       </ScrollView>
     </LinearGradient>
