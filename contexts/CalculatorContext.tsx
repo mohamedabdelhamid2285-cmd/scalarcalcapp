@@ -284,21 +284,28 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         // Log the math.js angle configuration right before evaluation
         console.log('Math.js config angle before evaluation:', math.config().angle);
 
-        let finalExpression = state.expression;
+        let parsedExpression = math.parse(state.expression);
 
-        // Check if in degree mode and transform the expression
+        // If in degree mode, transform the AST to ensure all trig function arguments are units
         if (angleUnitStr === 'deg') {
-          // This regex finds common trig functions and wraps their numeric arguments in the unit() function
           const trigFunctions = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'csc', 'sec', 'cot'];
-          trigFunctions.forEach(func => {
-            // Creates a regex like: /sin\(([\d.]+)\)/g
-            const regex = new RegExp(`${func}\\(([\\d.]+)\\)`, 'g');
-            // Replaces sin(90) with sin(unit(90, "deg"))
-            finalExpression = finalExpression.replace(regex, `${func}(unit($1, "deg"))`);
+
+          parsedExpression = parsedExpression.transform(function (node, path, parent) {
+            if (node.type === 'FunctionNode' && trigFunctions.includes(node.fn.name)) {
+              const arg = node.args[0];
+              // Only wrap if the argument is not already a UnitNode
+              if (arg && arg.type !== 'UnitNode') {
+                // Create a new UnitNode for the argument, effectively unit(arg, "deg")
+                // Use arg.toString() to get the string representation of the argument node
+                const unitNode = math.parse(`unit(${arg.toString()}, "deg")`);
+                return new math.FunctionNode(node.fn, [unitNode]);
+              }
+            }
+            return node; // Return the node unchanged if not a trig function or already a unit
           });
         }
 
-        const result = math.evaluate(finalExpression);
+        const result = parsedExpression.evaluate(); // Evaluate the transformed AST
         const formattedResult = math.format(result, { precision: 14 });
 
         const newHistory = [
