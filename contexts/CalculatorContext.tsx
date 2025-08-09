@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { create, all } from 'mathjs'; // Changed import
+import { create, all } from 'mathjs';
 
 export interface CalculatorState {
   expression: string;
@@ -146,6 +146,9 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
       try {
         if (!state.expression) return state;
 
+        // LOG #1: Check if the correct angle unit is reaching the reducer
+        console.log(`Reducer received: expression='${state.expression}', angleUnit='${state.angleUnit}'`);
+
         // Create a math.js instance and configure it with the current angle unit
         const math = create(all);
         math.config({
@@ -154,8 +157,14 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
           precision: 14,
         });
 
+        // LOG #2: Verify math.js configuration (optional, but good for deep dives)
+        console.log('Math.js angle config:', math.config().angle);
+
         const result = math.evaluate(state.expression); // Evaluate the original expression
         const formattedResult = math.format(result, { precision: 14 }); // Use math.format
+
+        // LOG #3: Check the result before storing
+        console.log('Evaluated result:', formattedResult);
 
         const newHistory = [
           ...state.history.slice(-9),
@@ -169,6 +178,7 @@ function calculatorReducer(state: CalculatorState, action: CalculatorAction): Ca
           error: null,
         };
       } catch (error) {
+        console.error('Math evaluation error:', error); // Log the actual error
         return {
           ...state,
           error: 'Math Error',
