@@ -119,6 +119,55 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          {/* User Manual */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>User Manual</Text>
+            <Text style={[styles.manualSectionTitle, { color: textColor }]}>Basic Operations</Text>
+            <Text style={[styles.manualText, { color: textColor }]}>
+              - **Numbers (0-9, .):** Input numerical values.
+              - **Operators (+, -, *, /):** Perform basic arithmetic.
+              - **= (Equals):** Calculate the result of the current expression.
+              - **AC (All Clear):** Clears the current expression and result, but preserves theme, angle unit, and memory.
+              - **DEL (Delete):** Deletes the last character from the expression.
+            </Text>
+
+            <Text style={[styles.manualSectionTitle, { color: textColor }]}>Advanced Functions</Text>
+            <Text style={[styles.manualText, { color: textColor }]}>
+              - **SHIFT:** Activates secondary functions (e.g., inverse trigonometric functions).
+              - **sin, cos, tan:** Trigonometric functions. Use SHIFT for asin, acos, atan.
+              - **log, ln:** Logarithmic functions.
+              - **^ (Power):** Raise a number to a power (e.g., 2^3 = 8).
+              - **sqrt (Square Root):** Calculates the square root.
+              - **! (Factorial):** Calculates the factorial of a number.
+              - **% (Percentage):** Converts a number to a percentage (e.g., 50% = 0.5).
+              - **+/- (Toggle Sign):** Changes the sign of the current number.
+            </Text>
+
+            <Text style={[styles.manualSectionTitle, { color: textColor }]}>Memory Functions</Text>
+            <Text style={[styles.manualText, { color: textColor }]}>
+              - **MS (Memory Store):** Stores the current result into memory.
+              - **MR (Memory Recall):** Recalls the value from memory to the display.
+              - **MC (Memory Clear):** Clears the stored memory value.
+              - **M+ (Memory Add):** Adds the current result to the memory value.
+              - **M- (Memory Subtract):** Subtracts the current result from the memory value.
+            </Text>
+
+            <Text style={[styles.manualSectionTitle, { color: textColor }]}>Variable Storage (ALPHA + STO)</Text>
+            <Text style={[styles.manualText, { color: textColor }]}>
+              - **ALPHA:** Activates variable input mode.
+              - **STO (Store):** Used with ALPHA to store a value into a variable (A, B, C, X, Y).
+                - *Example:* To store 10 into variable A: `10` then `STO` then `ALPHA` then `A`.
+              - **Recalling Variables:** Press `ALPHA` then the variable key (A, B, C, X, Y) to insert its value into the expression.
+            </Text>
+
+            <Text style={[styles.manualSectionTitle, { color: textColor }]}>Settings</Text>
+            <Text style={[styles.manualText, { color: textColor }]}>
+              - **Dark Theme:** Toggle between light and dark mode.
+              - **Angle Unit:** Select angle units for trigonometric functions (Degrees, Radians, Gradians).
+              - **Clear History:** Erase all past calculations from the history.
+            </Text>
+          </View>
+
           {/* About */}
           <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
             <Text style={[styles.cardTitle, { color: textColor }]}>About ScalarCalc</Text>
@@ -130,9 +179,6 @@ export default function SettingsScreen() {
             </Text>
             <Text style={[styles.aboutText, { color: textColor }]}>
               Supports matrices, vectors, statistics, and complex expressions
-            </Text>
-            <Text style={[styles.aboutText, { color: textColor }]}>
-              Built with React Native and Math.js
             </Text>
           </View>
         </ScrollView>
@@ -218,5 +264,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 4,
+  },
+  manualSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  manualText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 5,
   },
 });

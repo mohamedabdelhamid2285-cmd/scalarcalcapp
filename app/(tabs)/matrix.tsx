@@ -1,216 +1,175 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TextInput,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { evaluate, matrix, det, inv, transpose } from 'mathjs';
-import CalculatorButton from '@/components/CalculatorButton';
 import { useCalculator } from '@/contexts/CalculatorContext';
 
 export default function MatrixScreen() {
   const { state } = useCalculator();
   const isDark = state.theme === 'dark';
-  
-  const [matrixA, setMatrixA] = useState([
-    ['1', '2'],
-    ['3', '4']
-  ]);
-  const [matrixB, setMatrixB] = useState([
-    ['5', '6'],
-    ['7', '8']
-  ]);
-  const [result, setResult] = useState('');
-  const [selectedMatrix, setSelectedMatrix] = useState<'A' | 'B'>('A');
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
-  const inputBgColor = isDark ? '#2A2A2A' : '#F8F9FA';
+  const inputBackgroundColor = isDark ? '#2C2C2C' : '#E0E0E0';
+  const buttonBackgroundColor = isDark ? '#4A4A4A' : '#D1D5DB';
+  const buttonTextColor = isDark ? '#FFFFFF' : '#1F2937';
 
-  const updateMatrixValue = (row: number, col: number, value: string) => {
-    const currentMatrix = selectedMatrix === 'A' ? matrixA : matrixB;
-    const newMatrix = currentMatrix.map((r, rIndex) =>
-      rIndex === row ? r.map((c, cIndex) => (cIndex === col ? value : c)) : r
-    );
-    
-    if (selectedMatrix === 'A') {
-      setMatrixA(newMatrix);
+  const [matrixA, setMatrixA] = useState<number[][]>([[0, 0], [0, 0]]);
+  const [matrixB, setMatrixB] = useState<number[][]>([[0, 0], [0, 0]]);
+  const [rowsA, setRowsA] = useState('2');
+  const [colsA, setColsA] = useState('2');
+  const [rowsB, setRowsB] = useState('2');
+  const [colsB, setColsB] = useState('2'); // Corrected: setColsB instead of setColsA
+  const [resultMatrix, setResultMatrix] = useState<number[][] | null>(null);
+  const [operation, setOperation] = useState('');
+
+  const createMatrix = (rows: string, cols: string) => {
+    const numRows = parseInt(rows);
+    const numCols = parseInt(cols);
+    if (isNaN(numRows) || isNaN(numCols) || numRows <= 0 || numCols <= 0) return [[0, 0], [0, 0]];
+    return Array(numRows).fill(0).map(() => Array(numCols).fill(0));
+  };
+
+  const handleMatrixAChange = (text: string, r: number, c: number) => {
+    const newMatrix = [...matrixA];
+    newMatrix[r][c] = parseFloat(text || '0');
+    setMatrixA(newMatrix);
+  };
+
+  const handleMatrixBChange = (text: string, r: number, c: number) => {
+    const newMatrix = [...matrixB];
+    newMatrix[r][c] = parseFloat(text || '0');
+    setMatrixB(newMatrix);
+  };
+
+  const updateMatrixDimensions = (matrixType: 'A' | 'B', rows: string, cols: string) => {
+    if (matrixType === 'A') {
+      setRowsA(rows);
+      setColsA(cols);
+      setMatrixA(createMatrix(rows, cols));
     } else {
-      setMatrixB(newMatrix);
+      setRowsB(rows);
+      setColsB(cols);
+      setMatrixB(createMatrix(rows, cols));
     }
   };
 
-  const performMatrixOperation = (operation: string) => {
-    try {
-      const matrixANumbers = matrixA.map(row => row.map(val => parseFloat(val) || 0));
-      const matrixBNumbers = matrixB.map(row => row.map(val => parseFloat(val) || 0));
-      
-      let resultMatrix;
-      
-      switch (operation) {
-        case 'add':
-          resultMatrix = evaluate(`[[${matrixANumbers.map(row => row.join(',')).join('],[')}]] + [[${matrixBNumbers.map(row => row.join(',')).join('],[')}]]`);
-          break;
-        case 'subtract':
-          resultMatrix = evaluate(`[[${matrixANumbers.map(row => row.join(',')).join('],[')}]] - [[${matrixBNumbers.map(row => row.join(',')).join('],[')}]]`);
-          break;
-        case 'multiply':
-          resultMatrix = evaluate(`[[${matrixANumbers.map(row => row.join(',')).join('],[')}]] * [[${matrixBNumbers.map(row => row.join(',')).join('],[')}]]`);
-          break;
-        case 'detA':
-          const detResult = det(matrixANumbers);
-          setResult(`det(A) = ${detResult}`);
-          return;
-        case 'detB':
-          const detResultB = det(matrixBNumbers);
-          setResult(`det(B) = ${detResultB}`);
-          return;
-        case 'invA':
-          resultMatrix = inv(matrixANumbers);
-          break;
-        case 'invB':
-          resultMatrix = inv(matrixBNumbers);
-          break;
-        case 'transposeA':
-          resultMatrix = transpose(matrixANumbers);
-          break;
-        case 'transposeB':
-          resultMatrix = transpose(matrixBNumbers);
-          break;
-        default:
-          return;
-      }
-      
-      if (Array.isArray(resultMatrix)) {
-        setResult(formatMatrix(resultMatrix));
-      } else {
-        setResult(resultMatrix.toString());
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Matrix operation failed. Check dimensions and values.');
-      setResult('Error');
-    }
-  };
+  const renderMatrixInput = (matrix: number[][], handleMatrixChange: (text: string, r: number, c: number) => void) => (
+    <View style={styles.matrixGrid}>
+      {matrix.map((row, rIdx) => (
+        <View key={rIdx} style={styles.matrixRow}>
+          {row.map((cell, cIdx) => (
+            <TextInput
+              key={`${rIdx}-${cIdx}`}
+              style={[styles.matrixCellInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+              keyboardType="numeric"
+              defaultValue={cell.toString()}
+              onChangeText={(text) => handleMatrixChange(text, rIdx, cIdx)}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
 
-  const formatMatrix = (matrix: number[][]): string => {
-    return matrix.map(row => 
-      `[${row.map(val => parseFloat(val.toFixed(4))).join(', ')}]`
-    ).join('\n');
-  };
+  const renderMatrix = (matrix: number[][]) => (
+    <View style={styles.matrixGrid}>
+      {matrix.map((row, rIdx) => (
+        <View key={rIdx} style={styles.matrixRow}>
+          {row.map((cell, cIdx) => (
+            <Text key={`${rIdx}-${cIdx}`} style={[styles.matrixCellText, { color: textColor }]}>
+              {cell.toFixed(2)}
+            </Text>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={backgroundColors} style={styles.container}>
-        <ScrollView style={styles.content}>
-          <Text style={[styles.title, { color: textColor }]}>Matrix Calculator</Text>
-          {/* Matrix Selection */}
-          <View style={styles.matrixSelector}>
-            <CalculatorButton
-              symbol="Matrix A"
-              type={selectedMatrix === 'A' ? 'function' : 'digit'}
-              onPress={() => setSelectedMatrix('A')}
-            />
-            <CalculatorButton
-              symbol="Matrix B"
-              type={selectedMatrix === 'B' ? 'function' : 'digit'}
-              onPress={() => setSelectedMatrix('B')}
-            />
-          </View>
-
-          {/* Matrix Input */}
-          <View style={[styles.matrixContainer, { backgroundColor: inputBgColor }]}>
-            <Text style={[styles.matrixLabel, { color: textColor }]}>
-              Matrix {selectedMatrix}
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <View style={styles.content}>
+            <Text style={[styles.title, { color: textColor }]}>Matrix Calculator</Text>
+            <Text style={[styles.description, { color: textColor }]}>
+              Perform operations on matrices.
             </Text>
-            <View style={styles.matrixGrid}>
-              {(selectedMatrix === 'A' ? matrixA : matrixB).map((row, rowIndex) => (
-                <View key={rowIndex} style={styles.matrixRow}>
-                  {row.map((value, colIndex) => (
-                    <TextInput
-                      key={`${rowIndex}-${colIndex}`}
-                      style={[styles.matrixInput, { 
-                        backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF',
-                        color: textColor 
-                      }]}
-                      value={value}
-                      onChangeText={(text) => updateMatrixValue(rowIndex, colIndex, text)}
-                      keyboardType="numeric"
-                      placeholder="0"
-                      placeholderTextColor={isDark ? '#666666' : '#999999'}
-                    />
-                  ))}
-                </View>
-              ))}
-            </View>
-          </View>
 
-          {/* Operations */}
-          <View style={styles.operationsGrid}>
-            <View style={styles.row}>
-              <CalculatorButton
-                symbol="A + B"
-                type="operator"
-                onPress={() => performMatrixOperation('add')}
-              />
-              <CalculatorButton
-                symbol="A - B"
-                type="operator"
-                onPress={() => performMatrixOperation('subtract')}
-              />
-              <CalculatorButton
-                symbol="A × B"
-                type="operator"
-                onPress={() => performMatrixOperation('multiply')}
-              />
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Matrix A</Text>
+              <View style={styles.dimensionInputs}>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={rowsA}
+                  onChangeText={(text) => updateMatrixDimensions('A', text, colsA)}
+                  placeholder="Rows"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+                <Text style={{ color: textColor }}>x</Text>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={colsA}
+                  onChangeText={(text) => updateMatrixDimensions('A', rowsA, text)}
+                  placeholder="Cols"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+              </View>
+              {renderMatrixInput(matrixA, handleMatrixAChange)}
             </View>
-            <View style={styles.row}>
-              <CalculatorButton
-                symbol="det(A)"
-                type="function"
-                onPress={() => performMatrixOperation('detA')}
-              />
-              <CalculatorButton
-                symbol="det(B)"
-                type="function"
-                onPress={() => performMatrixOperation('detB')}
-              />
-              <CalculatorButton
-                symbol="A⁻¹"
-                type="function"
-                onPress={() => performMatrixOperation('invA')}
-              />
-            </View>
-            <View style={styles.row}>
-              <CalculatorButton
-                symbol="Aᵀ"
-                type="function"
-                onPress={() => performMatrixOperation('transposeA')}
-              />
-              <CalculatorButton
-                symbol="Bᵀ"
-                type="function"
-                onPress={() => performMatrixOperation('transposeB')}
-              />
-              <CalculatorButton
-                symbol="Clear"
-                type="clear"
-                onPress={() => setResult('')}
-              />
-            </View>
-          </View>
 
-          {/* Result Display */}
-          {result && (
-            <View style={[styles.resultContainer, { backgroundColor: inputBgColor }]}>
-              <Text style={[styles.resultLabel, { color: textColor }]}>Result:</Text>
-              <Text style={[styles.resultText, { color: textColor }]}>{result}</Text>
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Matrix B</Text>
+              <View style={styles.dimensionInputs}>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={rowsB}
+                  onChangeText={(text) => updateMatrixDimensions('B', text, colsB)}
+                  placeholder="Rows"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+                <Text style={{ color: textColor }}>x</Text>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={colsB}
+                  onChangeText={(text) => updateMatrixDimensions('B', rowsB, text)}
+                  placeholder="Cols"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+              </View>
+              {renderMatrixInput(matrixB, handleMatrixBChange)}
             </View>
-          )}
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('add')}>
+                <Text style={{ color: buttonTextColor }}>Add</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('subtract')}>
+                <Text style={{ color: buttonTextColor }}>Subtract</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('multiply')}>
+                <Text style={{ color: buttonTextColor }}>Multiply</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('transposeA')}>
+                <Text style={{ color: buttonTextColor }}>Transpose A</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('determinantA')}>
+                <Text style={{ color: buttonTextColor }}>Determinant A</Text>
+              </TouchableOpacity>
+            </View>
+
+            {resultMatrix && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({operation})</Text>
+                {renderMatrix(resultMatrix)}
+              </View>
+            )}
+          </View>
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -224,69 +183,90 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
   content: {
-    flex: 1,
-    padding: 16,
+    width: '90%',
+    maxWidth: 600,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
     textAlign: 'center',
+    lineHeight: 24,
     marginBottom: 20,
   },
-  matrixSelector: {
+  section: {
+    width: '100%',
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  dimensionInputs: {
     flexDirection: 'row',
-    marginBottom: 20,
-    gap: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
   },
-  matrixContainer: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  matrixLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
+  dimensionInput: {
+    width: 60,
+    height: 40,
+    borderRadius: 8,
+    paddingHorizontal: 10,
     textAlign: 'center',
+    fontSize: 16,
   },
   matrixGrid: {
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#6B7280',
+    borderRadius: 8,
+    padding: 5,
   },
   matrixRow: {
     flexDirection: 'row',
-    marginBottom: 8,
   },
-  matrixInput: {
+  matrixCellInput: {
     width: 60,
     height: 40,
-    marginHorizontal: 4,
-    borderRadius: 8,
+    margin: 2,
+    borderRadius: 5,
     textAlign: 'center',
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#333333',
   },
-  operationsGrid: {
-    marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  resultContainer: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  resultLabel: {
+  matrixCellText: {
+    width: 60,
+    height: 40,
+    margin: 2,
+    borderRadius: 5,
+    textAlign: 'center',
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+    lineHeight: 40, // Center text vertically
   },
-  resultText: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    lineHeight: 20,
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  operationButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
   },
 });

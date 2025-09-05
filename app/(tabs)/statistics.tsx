@@ -1,192 +1,163 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TextInput,
-  FlatList,
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { evaluate, mean, median, mode, std, variance } from 'mathjs';
-import CalculatorButton from '@/components/CalculatorButton';
 import { useCalculator } from '@/contexts/CalculatorContext';
 
 export default function StatisticsScreen() {
   const { state } = useCalculator();
   const isDark = state.theme === 'dark';
-  
-  const [dataPoints, setDataPoints] = useState<string[]>(['']);
-  const [results, setResults] = useState<any>({});
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
-  const inputBgColor = isDark ? '#2A2A2A' : '#F8F9FA';
+  const inputBackgroundColor = isDark ? '#2C2C2C' : '#E0E0E0';
+  const buttonBackgroundColor = isDark ? '#4A4A4A' : '#D1D5DB';
+  const buttonTextColor = isDark ? '#FFFFFF' : '#1F2937';
 
-  const addDataPoint = () => {
-    setDataPoints([...dataPoints, '']);
+  const [dataInput, setDataInput] = useState('');
+  const [results, setResults] = useState<{ [key: string]: number | string | null }>({});
+
+  const parseData = (input: string): number[] => {
+    return input.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
   };
 
-  const removeDataPoint = (index: number) => {
-    if (dataPoints.length > 1) {
-      setDataPoints(dataPoints.filter((_, i) => i !== index));
-    }
+  const calculateMean = (data: number[]) => {
+    if (data.length === 0) return null;
+    const sum = data.reduce((acc, val) => acc + val, 0);
+    return sum / data.length;
   };
 
-  const updateDataPoint = (index: number, value: string) => {
-    const newDataPoints = [...dataPoints];
-    newDataPoints[index] = value;
-    setDataPoints(newDataPoints);
+  const calculateMedian = (data: number[]) => {
+    if (data.length === 0) return null;
+    const sortedData = [...data].sort((a, b) => a - b);
+    const mid = Math.floor(sortedData.length / 2);
+    return sortedData.length % 2 === 0 ? (sortedData[mid - 1] + sortedData[mid]) / 2 : sortedData[mid];
   };
 
-  const calculateStatistics = () => {
-    try {
-      const numbers = dataPoints
-        .filter(point => point.trim() !== '')
-        .map(point => parseFloat(point))
-        .filter(num => !isNaN(num));
+  const calculateMode = (data: number[]) => {
+    if (data.length === 0) return null;
+    const frequencyMap: { [key: number]: number } = {};
+    data.forEach(num => {
+      frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+    });
 
-      if (numbers.length === 0) {
-        setResults({ error: 'No valid data points' });
-        return;
+    let maxFreq = 0;
+    let modes: number[] = [];
+    for (const numStr in frequencyMap) {
+      const num = parseFloat(numStr);
+      if (frequencyMap[num] > maxFreq) {
+        maxFreq = frequencyMap[num];
+        modes = [num];
+      } else if (frequencyMap[num] === maxFreq) {
+        modes.push(num);
       }
-
-      const stats = {
-        count: numbers.length,
-        sum: numbers.reduce((a, b) => a + b, 0),
-        mean: mean(numbers),
-        median: median(numbers),
-        standardDeviation: std(numbers),
-        variance: variance(numbers),
-        min: Math.min(...numbers),
-        max: Math.max(...numbers),
-        range: Math.max(...numbers) - Math.min(...numbers),
-      };
-
-      setResults(stats);
-    } catch (error) {
-      setResults({ error: 'Calculation error' });
     }
+    return modes.length === data.length ? 'No mode' : modes.join(', ');
   };
 
-  const clearAll = () => {
-    setDataPoints(['']);
-    setResults({});
+  const calculateStdDev = (data: number[]) => {
+    if (data.length < 2) return null;
+    const mean = calculateMean(data);
+    if (mean === null) return null;
+    const variance = data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / (data.length - 1);
+    return Math.sqrt(variance);
   };
 
-  const renderDataPoint = ({ item, index }: { item: string; index: number }) => (
-    <View style={styles.dataPointRow}>
-      <Text style={[styles.indexText, { color: textColor }]}>
-        X{index + 1}:
-      </Text>
-      <TextInput
-        style={[styles.dataInput, { 
-          backgroundColor: inputBgColor,
-          color: textColor,
-          borderColor: isDark ? '#333333' : '#CCCCCC'
-        }]}
-        value={item}
-        onChangeText={(text) => updateDataPoint(index, text)}
-        inputMode="numeric"
-        placeholder="Enter value"
-        placeholderTextColor={isDark ? '#666666' : '#999999'}
-      />
-      <CalculatorButton
-        symbol="×"
-        type="clear"
-        onPress={() => removeDataPoint(index)}
-      />
-    </View>
-  );
+  const handleCalculate = (type: string) => {
+    const data = parseData(dataInput);
+    if (data.length === 0) {
+      setResults({ error: 'Please enter valid numbers.' });
+      return;
+    }
+
+    let newResults: { [key: string]: number | string | null } = {};
+    switch (type) {
+      case 'mean':
+        newResults.mean = calculateMean(data);
+        break;
+      case 'median':
+        newResults.median = calculateMedian(data);
+        break;
+      case 'mode':
+        newResults.mode = calculateMode(data);
+        break;
+      case 'stdDev':
+        newResults.stdDev = calculateStdDev(data);
+        break;
+      case 'all':
+        newResults.mean = calculateMean(data);
+        newResults.median = calculateMedian(data);
+        newResults.mode = calculateMode(data);
+        newResults.stdDev = calculateStdDev(data);
+        break;
+    }
+    setResults(newResults);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient colors={backgroundColors} style={styles.container}>
-        <ScrollView style={styles.content}>
-          <Text style={[styles.title, { color: textColor }]}>Statistics Calculator</Text>
-          {/* Data Input Section */}
-          <View style={[styles.section, { backgroundColor: inputBgColor }]}>
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Data Points</Text>
-            
-            <FlatList
-              data={dataPoints}
-              renderItem={renderDataPoint}
-              keyExtractor={(_, index) => index.toString()}
-              style={styles.dataList}
-              scrollEnabled={false}
-            />
-            
-            <View style={styles.dataControls}>
-              <CalculatorButton
-                symbol="Add Point"
-                type="function"
-                onPress={addDataPoint}
-              />
-              <CalculatorButton
-                symbol="Calculate"
-                type="equals"
-                onPress={calculateStatistics}
-              />
-              <CalculatorButton
-                symbol="Clear All"
-                type="clear"
-                onPress={clearAll}
-              />
-            </View>
-          </View>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <View style={styles.content}>
+            <Text style={[styles.title, { color: textColor }]}>Statistics</Text>
+            <Text style={[styles.description, { color: textColor }]}>
+              Analyze data with statistical functions. Enter numbers separated by commas.
+            </Text>
 
-          {/* Results Section */}
-          {Object.keys(results).length > 0 && (
-            <View style={[styles.section, { backgroundColor: inputBgColor }]}>
-              <Text style={[styles.sectionTitle, { color: textColor }]}>Statistical Results</Text>
-              
-              {results.error ? (
-                <Text style={[styles.errorText, { color: '#EF4444' }]}>
-                  {results.error}
-                </Text>
-              ) : (
-                <View style={styles.resultsGrid}>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Count (n):</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.count}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Sum (Σx):</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.sum?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Mean (x̄):</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.mean?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Median:</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.median?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Std Dev (σ):</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.standardDeviation?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Variance (σ²):</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.variance?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Min:</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.min?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Max:</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.max?.toFixed(4)}</Text>
-                  </View>
-                  <View style={styles.resultRow}>
-                    <Text style={[styles.resultLabel, { color: textColor }]}>Range:</Text>
-                    <Text style={[styles.resultValue, { color: textColor }]}>{results.range?.toFixed(4)}</Text>
-                  </View>
-                </View>
-              )}
+            <TextInput
+              style={[styles.dataInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+              placeholder="e.g., 1, 2, 3, 4, 5"
+              placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+              keyboardType="numbers-and-punctuation"
+              multiline
+              numberOfLines={4}
+              value={dataInput}
+              onChangeText={setDataInput}
+            />
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('mean')}>
+                <Text style={{ color: buttonTextColor }}>Mean</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('median')}>
+                <Text style={{ color: buttonTextColor }}>Median</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('mode')}>
+                <Text style={{ color: buttonTextColor }}>Mode</Text>
+              </TouchableOpacity>
             </View>
-          )}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('stdDev')}>
+                <Text style={{ color: buttonTextColor }}>Std Dev</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('all')}>
+                <Text style={{ color: buttonTextColor }}>Calculate All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {Object.keys(results).length > 0 && (
+              <View style={styles.resultsContainer}>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Results</Text>
+                {results.error ? (
+                  <Text style={[styles.resultText, { color: 'red' }]}>{results.error}</Text>
+                ) : (
+                  <>
+                    {results.mean !== undefined && results.mean !== null && (
+                      <Text style={[styles.resultText, { color: textColor }]}>Mean: {typeof results.mean === 'number' ? results.mean.toFixed(4) : results.mean}</Text>
+                    )}
+                    {results.median !== undefined && results.median !== null && (
+                      <Text style={[styles.resultText, { color: textColor }]}>Median: {typeof results.median === 'number' ? results.median.toFixed(4) : results.median}</Text>
+                    )}
+                    {results.mode !== undefined && results.mode !== null && (
+                      <Text style={[styles.resultText, { color: textColor }]}>Mode: {results.mode}</Text>
+                    )}
+                    {results.stdDev !== undefined && results.stdDev !== null && (
+                      <Text style={[styles.resultText, { color: textColor }]}>Standard Deviation: {typeof results.stdDev === 'number' ? results.stdDev.toFixed(4) : results.stdDev}</Text>
+                    )}
+                  </>
+                )}
+              </View>
+            )}
+          </View>
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -200,74 +171,67 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
   content: {
-    flex: 1,
-    padding: 16,
+    width: '90%',
+    maxWidth: 600,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
-  section: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  dataList: {
-    maxHeight: 300,
-  },
-  dataPointRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  indexText: {
+  description: {
     fontSize: 16,
-    fontWeight: '600',
-    width: 40,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
   },
   dataInput: {
-    flex: 1,
-    height: 40,
+    width: '100%',
+    minHeight: 100,
     borderRadius: 8,
-    paddingHorizontal: 12,
+    padding: 15,
     fontSize: 16,
-    marginHorizontal: 8,
-    borderWidth: 1,
+    textAlignVertical: 'top',
+    marginBottom: 20,
   },
-  dataControls: {
+  buttonRow: {
     flexDirection: 'row',
-    marginTop: 12,
-    gap: 8,
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
   },
-  resultsGrid: {
-    gap: 8,
-  },
-  resultRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  operationButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     alignItems: 'center',
-    paddingVertical: 4,
+    justifyContent: 'center',
+    minWidth: 100,
   },
-  resultLabel: {
-    fontSize: 16,
-    fontWeight: '500',
+  resultsContainer: {
+    width: '100%',
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#6B7280',
+    alignItems: 'center',
   },
-  resultValue: {
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    fontFamily: 'monospace',
+    marginBottom: 10,
   },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 8,
+  resultText: {
+    fontSize: 18,
+    marginBottom: 5,
   },
 });

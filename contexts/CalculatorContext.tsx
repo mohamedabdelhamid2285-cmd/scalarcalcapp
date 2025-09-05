@@ -368,7 +368,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         newState = {
           ...state,
           result: formattedResult,
-          expression: formattedResult, // Set expression to result for continued calculations
+          expression: '', // Clear expression after equals, result is shown
           history: newHistory,
           error: null,
           lastInputType: 'equals', // Mark last input as equals
