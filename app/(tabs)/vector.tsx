@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { useAds } from '@/contexts/AdContext';
+import PremiumModal from '@/components/PremiumModal';
 
 export default function VectorScreen() {
   const { state } = useCalculator();
+  const { isPremium, adFreeTrial } = useAds();
   const isDark = state.theme === 'dark';
+  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -19,16 +23,35 @@ export default function VectorScreen() {
   const [resultScalar, setResultScalar] = useState<number | null>(null);
   const [operation, setOperation] = useState('');
 
+  const isLocked = !isPremium && !adFreeTrial;
+
   const handleVectorAChange = (text: string, index: number) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
     const newVector = [...vectorA];
     newVector[index] = parseFloat(text || '0');
     setVectorA(newVector);
   };
 
   const handleVectorBChange = (text: string, index: number) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
     const newVector = [...vectorB];
     newVector[index] = parseFloat(text || '0');
     setVectorB(newVector);
+  };
+
+  const handleOperationPress = (op: string) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
+    setOperation(op);
+    // Add actual vector operation logic here
   };
 
   const renderVectorInput = (vector: number[], handleVectorChange: (text: string, index: number) => void) => (
@@ -38,6 +61,7 @@ export default function VectorScreen() {
           key={index}
           style={[styles.vectorComponentInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
           keyboardType="numeric"
+          editable={!isLocked}
           defaultValue={component.toString()}
           onChangeText={(text) => handleVectorChange(text, index)}
         />
@@ -57,6 +81,16 @@ export default function VectorScreen() {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.content}>
             <Text style={[styles.title, { color: textColor }]}>Vector Calculator</Text>
+           {isLocked && (
+             <View style={styles.lockNotice}>
+               <Text style={[styles.lockText, { color: '#F59E0B' }]}>
+                 🔒 Premium Feature
+               </Text>
+               <Text style={[styles.lockDescription, { color: textColor }]}>
+                 Upgrade to access advanced vector operations
+               </Text>
+             </View>
+           )}
             <Text style={[styles.description, { color: textColor }]}>
               Perform operations on vectors.
             </Text>
@@ -104,8 +138,16 @@ export default function VectorScreen() {
             )}
           </View>
         </ScrollView>
+        
+        <PremiumModal
+          visible={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+        />
       </LinearGradient>
-    </SafeAreaView>
+            <TouchableOpacity 
+              style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+              onPress={() => handleOperationPress('add')}
+            >
   );
 }
 
@@ -180,5 +222,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 10,
+  },
+  lockNotice: {
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+  },
+  lockText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  lockDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });

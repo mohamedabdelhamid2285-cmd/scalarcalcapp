@@ -1,22 +1,304 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useCalculator } from '@/contexts/CalculatorContext';
+import { useAds } from '@/contexts/AdContext';
+import PremiumModal from '@/components/PremiumModal'
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { CalculatorProvider } from '@/contexts/CalculatorContext';
-import { AdProvider } from '@/contexts/AdContext';
 
-export default function RootLayout() {
+export default function MatrixScreen() {
   useFrameworkReady();
+  const { state } = useCalculator();
+  const { isPremium, adFreeTrial } = useAds();
+  const isDark = state.theme === 'dark';
+  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
+
+  const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
+  const textColor = isDark ? '#FFFFFF' : '#1F2937';
+  const inputBackgroundColor = isDark ? '#2C2C2C' : '#E0E0E0';
+  const buttonBackgroundColor = isDark ? '#4A4A4A' : '#D1D5DB';
+  const buttonTextColor = isDark ? '#FFFFFF' : '#1F2937';
+
+  const [matrixA, setMatrixA] = useState<number[][]>([[0, 0], [0, 0]]);
+  const [matrixB, setMatrixB] = useState<number[][]>([[0, 0], [0, 0]]);
+  const [rowsA, setRowsA] = useState('2');
+  const [colsA, setColsA] = useState('2');
+  const [rowsB, setRowsB] = useState('2');
+  const [colsB, setColsB] = useState('2'); // Corrected: setColsB instead of setColsA
+  const [resultMatrix, setResultMatrix] = useState<number[][] | null>(null);
+  const [operation, setOperation] = useState('');
+
+  const isLocked = !isPremium && !adFreeTrial;
+
+  const createMatrix = (rows: string, cols: string) => {
+    const numRows = parseInt(rows);
+    const numCols = parseInt(cols);
+    if (isNaN(numRows) || isNaN(numCols) || numRows <= 0 || numCols <= 0) return [[0, 0], [0, 0]];
+    return Array(numRows).fill(0).map(() => Array(numCols).fill(0));
+  };
+
+  const handleMatrixAChange = (text: string, r: number, c: number) => {
+    const newMatrix = [...matrixA];
+    newMatrix[r][c] = parseFloat(text || '0');
+    setMatrixA(newMatrix);
+  };
+
+  const handleMatrixBChange = (text: string, r: number, c: number) => {
+    const newMatrix = [...matrixB];
+    newMatrix[r][c] = parseFloat(text || '0');
+    setMatrixB(newMatrix);
+  };
+
+  const handleOperationPress = (op: string) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
+    setOperation(op);
+    // Add actual matrix operation logic here
+  };
+
+  const updateMatrixDimensions = (matrixType: 'A' | 'B', rows: string, cols: string) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
+    
+    if (matrixType === 'A') {
+      setRowsA(rows);
+      setColsA(cols);
+      setMatrixA(createMatrix(rows, cols));
+    } else {
+      setRowsB(rows);
+      setColsB(cols);
+      setMatrixB(createMatrix(rows, cols));
+    }
+  };
+
+  const renderMatrixInput = (matrix: number[][], handleMatrixChange: (text: string, r: number, c: number) => void) => (
+    <View style={styles.matrixGrid}>
+      {matrix.map((row, rIdx) => (
+        <View key={rIdx} style={styles.matrixRow}>
+          {row.map((cell, cIdx) => (
+            <TextInput
+              key={`${rIdx}-${cIdx}`}
+              style={[styles.matrixCellInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+              keyboardType="numeric"
+              defaultValue={cell.toString()}
+              onChangeText={(text) => handleMatrixChange(text, rIdx, cIdx)}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderMatrix = (matrix: number[][]) => (
+    <View style={styles.matrixGrid}>
+      {matrix.map((row, rIdx) => (
+        <View key={rIdx} style={styles.matrixRow}>
+          {row.map((cell, cIdx) => (
+            <Text key={`${rIdx}-${cIdx}`} style={[styles.matrixCellText, { color: textColor }]}>
+              {cell.toFixed(2)}
+            </Text>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
 
   return (
-    <AdProvider>
-      <CalculatorProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </CalculatorProvider>
-    </AdProvider>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={backgroundColors} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <View style={styles.content}>
+            <Text style={[styles.title, { color: textColor }]}>Matrix Calculator</Text>
+            {isLocked && (
+              <View style={styles.lockNotice}>
+                <Text style={[styles.lockText, { color: '#F59E0B' }]}>
+                  🔒 Premium Feature
+                </Text>
+                <Text style={[styles.lockDescription, { color: textColor }]}>
+                  Upgrade to access advanced matrix operations
+                </Text>
+              </View>
+            )}
+            <Text style={[styles.description, { color: textColor }]}>
+              Perform operations on matrices.
+            </Text>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Matrix A</Text>
+              <View style={styles.dimensionInputs}>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={rowsA}
+                  onChangeText={(text) => updateMatrixDimensions('A', text, colsA)}
+                  placeholder="Rows"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+                <Text style={{ color: textColor }}>x</Text>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={colsA}
+                  onChangeText={(text) => updateMatrixDimensions('A', rowsA, text)}
+                  placeholder="Cols"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+              </View>
+              {renderMatrixInput(matrixA, handleMatrixAChange)}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>Matrix B</Text>
+              <View style={styles.dimensionInputs}>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={rowsB}
+                  onChangeText={(text) => updateMatrixDimensions('B', text, colsB)}
+                  placeholder="Rows"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+                <Text style={{ color: textColor }}>x</Text>
+                <TextInput
+                  style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
+                  keyboardType="numeric"
+                  value={colsB}
+                  onChangeText={(text) => updateMatrixDimensions('B', rowsB, text)}
+                  placeholder="Cols"
+                  placeholderTextColor={isDark ? '#A0A0A0' : '#6B7280'}
+                />
+              </View>
+              {renderMatrixInput(matrixB, handleMatrixBChange)}
+            </View>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('add')}>
+                <Text style={{ color: buttonTextColor }}>Add</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('subtract')}>
+                <Text style={{ color: buttonTextColor }}>Subtract</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('multiply')}>
+                <Text style={{ color: buttonTextColor }}>Multiply</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('transposeA')}>
+                <Text style={{ color: buttonTextColor }}>Transpose A</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('determinantA')}>
+                <Text style={{ color: buttonTextColor }}>Determinant A</Text>
+              </TouchableOpacity>
+            </View>
+
+            {resultMatrix && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({operation})</Text>
+                {renderMatrix(resultMatrix)}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  content: {
+    width: '90%',
+    maxWidth: 600,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  section: {
+    width: '100%',
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  dimensionInputs: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 10,
+  },
+  dimensionInput: {
+    width: 60,
+    height: 40,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  matrixGrid: {
+    borderWidth: 1,
+    borderColor: '#6B7280',
+    borderRadius: 8,
+    padding: 5,
+  },
+  matrixRow: {
+    flexDirection: 'row',
+  },
+  matrixCellInput: {
+    width: 60,
+    height: 40,
+    margin: 2,
+    borderRadius: 5,
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  matrixCellText: {
+    width: 60,
+    height: 40,
+    margin: 2,
+    borderRadius: 5,
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 40, // Center text vertically
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  operationButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+});

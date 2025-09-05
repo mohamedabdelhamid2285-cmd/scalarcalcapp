@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { useAds } from '@/contexts/AdContext';
+import PremiumModal from '@/components/PremiumModal';
 
 export default function StatisticsScreen() {
   const { state } = useCalculator();
+  const { isPremium, adFreeTrial } = useAds();
   const isDark = state.theme === 'dark';
+  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -15,6 +19,8 @@ export default function StatisticsScreen() {
 
   const [dataInput, setDataInput] = useState('');
   const [results, setResults] = useState<{ [key: string]: number | string | null }>({});
+
+  const isLocked = !isPremium && !adFreeTrial;
 
   const parseData = (input: string): number[] => {
     return input.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
@@ -63,6 +69,11 @@ export default function StatisticsScreen() {
   };
 
   const handleCalculate = (type: string) => {
+    if (isLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
+    
     const data = parseData(dataInput);
     if (data.length === 0) {
       setResults({ error: 'Please enter valid numbers.' });
@@ -99,6 +110,16 @@ export default function StatisticsScreen() {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.content}>
             <Text style={[styles.title, { color: textColor }]}>Statistics</Text>
+           {isLocked && (
+             <View style={styles.lockNotice}>
+               <Text style={[styles.lockText, { color: '#F59E0B' }]}>
+                 🔒 Premium Feature
+               </Text>
+               <Text style={[styles.lockDescription, { color: textColor }]}>
+                 Upgrade to access advanced statistical analysis
+               </Text>
+             </View>
+           )}
             <Text style={[styles.description, { color: textColor }]}>
               Analyze data with statistical functions. Enter numbers separated by commas.
             </Text>
@@ -148,17 +169,31 @@ export default function StatisticsScreen() {
                       <Text style={[styles.resultText, { color: textColor }]}>Median: {typeof results.median === 'number' ? results.median.toFixed(4) : results.median}</Text>
                     )}
                     {results.mode !== undefined && results.mode !== null && (
-                      <Text style={[styles.resultText, { color: textColor }]}>Mode: {results.mode}</Text>
+           <TouchableOpacity 
+             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+             onPress={() => handleCalculate('mean')}
+           >
                     )}
                     {results.stdDev !== undefined && results.stdDev !== null && (
-                      <Text style={[styles.resultText, { color: textColor }]}>Standard Deviation: {typeof results.stdDev === 'number' ? results.stdDev.toFixed(4) : results.stdDev}</Text>
+           <TouchableOpacity 
+             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+             onPress={() => handleCalculate('median')}
+           >
                     )}
                   </>
-                )}
+           <TouchableOpacity 
+             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+             onPress={() => handleCalculate('mode')}
+           >
               </View>
             )}
           </View>
         </ScrollView>
+       
+       <PremiumModal
+         visible={showPremiumModal}
+         onClose={() => setShowPremiumModal(false)}
+       />
       </LinearGradient>
     </SafeAreaView>
   );
@@ -233,5 +268,22 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 18,
     marginBottom: 5,
+  },
+  lockNotice: {
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+  },
+  lockText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  lockDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });

@@ -3,8 +3,10 @@ import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { useAds } from '@/contexts/AdContext';
+import { useAds } from '@/contexts/AdContext';
 
 export default function TabLayout() {
+  const { isPremium, adFreeTrial } = useAds();
   const { isPremium, adFreeTrial } = useAds();
   const colorScheme = useColorScheme(); // Use system color scheme for initial tab bar styling
   const isDark = colorScheme === 'dark';
@@ -12,7 +14,6 @@ export default function TabLayout() {
   const inactiveTintColor = isDark ? '#A0A0A0' : '#6B7280';
   const tabBarBackground = isDark ? '#1E1E1E' : '#FFFFFF';
 
-  return (
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -29,6 +30,10 @@ export default function TabLayout() {
             fontWeight: '600',
             marginBottom: 4,
           },
+          tabBarBadge: (!isPremium && !adFreeTrial) ? '🔓' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
           tabBarBadge: (!isPremium && !adFreeTrial) ? '🔓' : undefined,
           tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
           tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
@@ -80,6 +85,7 @@ export default function TabLayout() {
             ),
           }}
         />
-      </Tabs>
   );
+}
+
 }

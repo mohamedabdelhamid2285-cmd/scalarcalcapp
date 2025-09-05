@@ -10,12 +10,15 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
 import { useAds } from '@/contexts/AdContext';
+import { useAds } from '@/contexts/AdContext';
 import Display from '@/components/Display';
 import CalculatorButton from '@/components/CalculatorButton';
+import BannerAd from '@/components/BannerAd';
 import BannerAd from '@/components/BannerAd';
 
 export default function CalculatorScreen() {
   const { state, dispatch } = useCalculator();
+  const { showInterstitialAd } = useAds();
   const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
 
@@ -28,6 +31,12 @@ export default function CalculatorScreen() {
 
   const handlePress = (action: any) => {
     console.log('CalculatorScreen: handlePress called with action:', action); // Log when handlePress is triggered
+    
+    // Show interstitial ad occasionally for non-premium users
+    if (action.type === 'EQUALS' && Math.random() < 0.3) {
+      showInterstitialAd();
+    }
+    
     
     // Show interstitial ad occasionally for non-premium users
     if (action.type === 'EQUALS' && Math.random() < 0.3) {
@@ -49,6 +58,7 @@ export default function CalculatorScreen() {
         style={styles.container}
       >
         <Display />
+        <BannerAd />
         <BannerAd />
         <View style={styles.buttonGrid}>
           {/* Row 1: Scientific Functions */}
