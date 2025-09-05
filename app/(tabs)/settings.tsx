@@ -10,11 +10,15 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { useAds } from '@/contexts/AdContext';
 import CalculatorButton from '@/components/CalculatorButton';
+import PremiumModal from '@/components/PremiumModal';
 
 export default function SettingsScreen() {
   const { state, dispatch } = useCalculator();
+  const { isPremium, adFreeTrial } = useAds();
   const isDark = state.theme === 'dark';
+  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -35,6 +39,52 @@ export default function SettingsScreen() {
         <ScrollView style={styles.content}>
           <Text style={[styles.title, { color: textColor }]}>Settings</Text>
           
+          {/* Premium Status */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>Premium Status</Text>
+            
+            {isPremium ? (
+              <View style={styles.premiumStatus}>
+                <Text style={[styles.premiumText, { color: '#10B981' }]}>
+                  ✓ Premium Active
+                </Text>
+                <Text style={[styles.premiumDescription, { color: textColor }]}>
+                  Enjoying ad-free experience with all features unlocked
+                </Text>
+              </View>
+            ) : adFreeTrial ? (
+              <View style={styles.premiumStatus}>
+                <Text style={[styles.premiumText, { color: '#F59E0B' }]}>
+                  🎉 Free Trial Active
+                </Text>
+                <Text style={[styles.premiumDescription, { color: textColor }]}>
+                  24-hour ad-free trial in progress
+                </Text>
+                <TouchableOpacity
+                  style={styles.upgradeButton}
+                  onPress={() => setShowPremiumModal(true)}
+                >
+                  <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.premiumStatus}>
+                <Text style={[styles.premiumText, { color: textColor }]}>
+                  Free Version
+                </Text>
+                <Text style={[styles.premiumDescription, { color: textColor }]}>
+                  Upgrade to remove ads and unlock premium features
+                </Text>
+                <TouchableOpacity
+                  style={styles.upgradeButton}
+                  onPress={() => setShowPremiumModal(true)}
+                >
+                  <Text style={styles.upgradeButtonText}>Go Premium</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* Theme Settings */}
           <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
             <Text style={[styles.cardTitle, { color: textColor }]}>Appearance</Text>
@@ -182,6 +232,11 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </ScrollView>
+        
+        <PremiumModal
+          visible={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+        />
       </LinearGradient>
     </SafeAreaView>
   );
@@ -264,6 +319,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 4,
+  },
+  premiumStatus: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  premiumText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  premiumDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+    opacity: 0.8,
+  },
+  upgradeButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  upgradeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   manualSectionTitle: {
     fontSize: 16,

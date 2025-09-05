@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native'; // Import useColorScheme
+import { useColorScheme } from 'react-native';
+import { useAds } from '@/contexts/AdContext';
 
 export default function TabLayout() {
+  const { isPremium, adFreeTrial } = useAds();
   const colorScheme = useColorScheme(); // Use system color scheme for initial tab bar styling
   const isDark = colorScheme === 'dark';
   const tintColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -11,7 +13,6 @@ export default function TabLayout() {
   const tabBarBackground = isDark ? '#1E1E1E' : '#FFFFFF';
 
   return (
-    <CalculatorProvider>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -28,6 +29,10 @@ export default function TabLayout() {
             fontWeight: '600',
             marginBottom: 4,
           },
+          tabBarBadge: (!isPremium && !adFreeTrial) ? '🔓' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
         }}
       >
         <Tabs.Screen
@@ -76,6 +81,5 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </CalculatorProvider>
   );
 }
