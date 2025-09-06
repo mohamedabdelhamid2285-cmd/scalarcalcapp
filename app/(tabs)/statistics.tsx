@@ -169,22 +169,13 @@ export default function StatisticsScreen() {
                       <Text style={[styles.resultText, { color: textColor }]}>Median: {typeof results.median === 'number' ? results.median.toFixed(4) : results.median}</Text>
                     )}
                     {results.mode !== undefined && results.mode !== null && (
-           <TouchableOpacity 
-             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
-             onPress={() => handleCalculate('mean')}
-           >
+                       <Text style={[styles.resultText, { color: textColor }]}>Mode: {typeof results.mode === 'number' ? results.mode.toFixed(4) : results.mode}</Text>
                     )}
                     {results.stdDev !== undefined && results.stdDev !== null && (
-           <TouchableOpacity 
-             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
-             onPress={() => handleCalculate('median')}
-           >
+                       <Text style={[styles.resultText, { color: textColor }]}>Std Dev: {typeof results.stdDev === 'number' ? results.stdDev.toFixed(4) : results.stdDev}</Text>
                     )}
                   </>
-           <TouchableOpacity 
-             style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
-             onPress={() => handleCalculate('mode')}
-           >
+                 )}
               </View>
             )}
           </View>
