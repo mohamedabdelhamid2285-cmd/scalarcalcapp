@@ -3,7 +3,6 @@ import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { useAds } from '@/contexts/AdContext';
-import { useAds } from '@/contexts/AdContext';
 
 export default function TabLayout() {
   const { isPremium, adFreeTrial } = useAds();
