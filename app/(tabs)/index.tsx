@@ -10,15 +10,12 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
 import { useAds } from '@/contexts/AdContext';
-import { useAds } from '@/contexts/AdContext';
 import Display from '@/components/Display';
 import CalculatorButton from '@/components/CalculatorButton';
-import BannerAd from '@/components/BannerAd';
 import BannerAd from '@/components/BannerAd';
 
 export default function CalculatorScreen() {
   const { state, dispatch } = useCalculator();
-  const { showInterstitialAd } = useAds();
   const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
 
