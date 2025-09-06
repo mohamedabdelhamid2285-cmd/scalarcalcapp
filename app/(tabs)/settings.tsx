@@ -11,17 +11,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
 import { useAds } from '@/contexts/AdContext';
-import { useAds } from '@/contexts/AdContext';
 import CalculatorButton from '@/components/CalculatorButton';
-import PremiumModal from '@/components/PremiumModal';
 import PremiumModal from '@/components/PremiumModal';
 
 export default function SettingsScreen() {
   const { state, dispatch } = useCalculator();
   const { isPremium, adFreeTrial } = useAds();
-  const { isPremium, adFreeTrial } = useAds();
   const isDark = state.theme === 'dark';
-  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
   const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
