@@ -1,6 +1,4 @@
 import { Tabs } from 'expo-router';
-import { CalculatorProvider } from '@/contexts/CalculatorContext';
-import { AdProvider } from '@/contexts/AdContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
 import { useAds } from '@/contexts/AdContext';
@@ -14,76 +12,72 @@ export default function TabLayout() {
   const tabBarBackground = isDark ? '#1E1E1E' : '#FFFFFF';
 
   return (
-    <CalculatorProvider>
-      <AdProvider>
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor: tintColor,
-            tabBarInactiveTintColor: inactiveTintColor,
-            tabBarStyle: {
-              backgroundColor: tabBarBackground,
-              borderTopWidth: 0,
-              elevation: 0,
-              shadowOpacity: 0,
-            },
-            tabBarLabelStyle: {
-              fontSize: 12,
-              fontWeight: '600',
-              marginBottom: 4,
-            },
-          }}
-        >
-          <Tabs.Screen
-            name="index"
-            options={{
-              title: 'Calculator',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="calculator-outline" size={size} color={color} />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="matrix"
-            options={{
-              title: 'Matrix',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="grid-outline" size={size} color={color} />
-              ),
-              tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
-            }}
-          />
-          <Tabs.Screen
-            name="vector"
-            options={{
-              title: 'Vector',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="navigate-outline" size={size} color={color} />
-              ),
-              tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
-            }}
-          />
-          <Tabs.Screen
-            name="statistics"
-            options={{
-              title: 'Statistics',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="stats-chart-outline" size={size} color={color} />
-              ),
-              tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
-            }}
-          />
-          <Tabs.Screen
-            name="settings"
-            options={{
-              title: 'Settings',
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="settings-outline" size={size} color={color} />
-              ),
-            }}
-          />
-        </Tabs>
-      </AdProvider>
-    </CalculatorProvider>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: tintColor,
+        tabBarInactiveTintColor: inactiveTintColor,
+        tabBarStyle: {
+          backgroundColor: tabBarBackground,
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginBottom: 4,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Calculator',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calculator-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="matrix"
+        options={{
+          title: 'Matrix',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="vector"
+        options={{
+          title: 'Vector',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="navigate-outline" size={size} color={color} />
+          ),
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="statistics"
+        options={{
+          title: 'Statistics',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart-outline" size={size} color={color} />
+          ),
+          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
