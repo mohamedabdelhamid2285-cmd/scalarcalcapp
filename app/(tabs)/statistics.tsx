@@ -7,9 +7,8 @@ import PremiumModal from '@/components/PremiumModal';
 
 export default function StatisticsScreen() {
   const { state } = useCalculator();
-  const { isPremium, adFreeTrial } = useAds();
+  const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
-  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -19,8 +18,6 @@ export default function StatisticsScreen() {
 
   const [dataInput, setDataInput] = useState('');
   const [results, setResults] = useState<{ [key: string]: number | string | null }>({});
-
-  const isLocked = !isPremium && !adFreeTrial;
 
   const parseData = (input: string): number[] => {
     return input.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
@@ -69,11 +66,6 @@ export default function StatisticsScreen() {
   };
 
   const handleCalculate = (type: string) => {
-    if (isLocked) {
-      setShowPremiumModal(true);
-      return;
-    }
-    
     const data = parseData(dataInput);
     if (data.length === 0) {
       setResults({ error: 'Please enter valid numbers.' });
@@ -110,16 +102,6 @@ export default function StatisticsScreen() {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.content}>
             <Text style={[styles.title, { color: textColor }]}>Statistics</Text>
-           {isLocked && (
-             <View style={styles.lockNotice}>
-               <Text style={[styles.lockText, { color: '#F59E0B' }]}>
-                 🔒 Premium Feature
-               </Text>
-               <Text style={[styles.lockDescription, { color: textColor }]}>
-                 Upgrade to access advanced statistical analysis
-               </Text>
-             </View>
-           )}
             <Text style={[styles.description, { color: textColor }]}>
               Analyze data with statistical functions. Enter numbers separated by commas.
             </Text>
@@ -180,11 +162,6 @@ export default function StatisticsScreen() {
             )}
           </View>
         </ScrollView>
-       
-       <PremiumModal
-         visible={showPremiumModal}
-         onClose={() => setShowPremiumModal(false)}
-       />
       </LinearGradient>
     </SafeAreaView>
   );

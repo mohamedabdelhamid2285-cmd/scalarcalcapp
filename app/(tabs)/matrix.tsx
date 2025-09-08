@@ -7,9 +7,8 @@ import PremiumModal from '@/components/PremiumModal';
 
 export default function MatrixScreen() {
   const { state } = useCalculator();
-  const { isPremium, adFreeTrial } = useAds();
+  const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
-  const [showPremiumModal, setShowPremiumModal] = React.useState(false);
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -25,8 +24,6 @@ export default function MatrixScreen() {
   const [colsB, setColsB] = useState('2'); // Corrected: setColsB instead of setColsA
   const [resultMatrix, setResultMatrix] = useState<number[][] | null>(null);
   const [operation, setOperation] = useState('');
-
-  const isLocked = !isPremium && !adFreeTrial;
 
   const createMatrix = (rows: string, cols: string) => {
     const numRows = parseInt(rows);
@@ -48,20 +45,11 @@ export default function MatrixScreen() {
   };
 
   const handleOperationPress = (op: string) => {
-    if (isLocked) {
-      setShowPremiumModal(true);
-      return;
-    }
     setOperation(op);
     // Add actual matrix operation logic here
   };
 
   const updateMatrixDimensions = (matrixType: 'A' | 'B', rows: string, cols: string) => {
-    if (isLocked) {
-      setShowPremiumModal(true);
-      return;
-    }
-    
     if (matrixType === 'A') {
       setRowsA(rows);
       setColsA(cols);
@@ -111,16 +99,6 @@ export default function MatrixScreen() {
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
           <View style={styles.content}>
             <Text style={[styles.title, { color: textColor }]}>Matrix Calculator</Text>
-            {isLocked && (
-              <View style={styles.lockNotice}>
-                <Text style={[styles.lockText, { color: '#F59E0B' }]}>
-                  🔒 Premium Feature
-                </Text>
-                <Text style={[styles.lockDescription, { color: textColor }]}>
-                  Upgrade to access advanced matrix operations
-                </Text>
-              </View>
-            )}
             <Text style={[styles.description, { color: textColor }]}>
               Perform operations on matrices.
             </Text>
@@ -131,7 +109,6 @@ export default function MatrixScreen() {
                 <TextInput
                   style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
                   keyboardType="numeric"
-                  editable={!isLocked}
                   value={rowsA}
                   onChangeText={(text) => updateMatrixDimensions('A', text, colsA)}
                   placeholder="Rows"
@@ -141,7 +118,6 @@ export default function MatrixScreen() {
                 <TextInput
                   style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
                   keyboardType="numeric"
-                  editable={!isLocked}
                   value={colsA}
                   onChangeText={(text) => updateMatrixDimensions('A', rowsA, text)}
                   placeholder="Cols"
@@ -157,7 +133,6 @@ export default function MatrixScreen() {
                 <TextInput
                   style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
                   keyboardType="numeric"
-                  editable={!isLocked}
                   value={rowsB}
                   onChangeText={(text) => updateMatrixDimensions('B', text, colsB)}
                   placeholder="Rows"
@@ -167,7 +142,6 @@ export default function MatrixScreen() {
                 <TextInput
                   style={[styles.dimensionInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
                   keyboardType="numeric"
-                  editable={!isLocked}
                   value={colsB}
                   onChangeText={(text) => updateMatrixDimensions('B', rowsB, text)}
                   placeholder="Cols"
@@ -179,19 +153,19 @@ export default function MatrixScreen() {
 
             <View style={styles.buttonRow}>
               <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
                 onPress={() => handleOperationPress('add')}
               >
                 <Text style={{ color: buttonTextColor }}>Add</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
                 onPress={() => handleOperationPress('subtract')}
               >
                 <Text style={{ color: buttonTextColor }}>Subtract</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
                 onPress={() => handleOperationPress('multiply')}
               >
                 <Text style={{ color: buttonTextColor }}>Multiply</Text>
@@ -199,13 +173,13 @@ export default function MatrixScreen() {
             </View>
             <View style={styles.buttonRow}>
               <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
                 onPress={() => handleOperationPress('transposeA')}
               >
                 <Text style={{ color: buttonTextColor }}>Transpose A</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
+                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
                 onPress={() => handleOperationPress('determinantA')}
               >
                 <Text style={{ color: buttonTextColor }}>Determinant A</Text>
@@ -220,11 +194,6 @@ export default function MatrixScreen() {
             )}
           </View>
         </ScrollView>
-        
-        <PremiumModal
-          visible={showPremiumModal}
-          onClose={() => setShowPremiumModal(false)}
-        />
       </LinearGradient>
     </SafeAreaView>
   );

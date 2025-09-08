@@ -5,13 +5,7 @@ import { useAds } from '@/contexts/AdContext';
 
 export default function BannerAd() {
   const { state } = useCalculator();
-  const { isPremium, adFreeTrial } = useAds();
   const isDark = state.theme === 'dark';
-
-  // Don't show ads for premium users or during trial
-  if (isPremium || adFreeTrial) {
-    return null;
-  }
 
   const backgroundColor = isDark ? '#2A2A2A' : '#F0F0F0';
   const textColor = isDark ? '#FFFFFF' : '#1F2937';

@@ -4,7 +4,6 @@ import { useColorScheme } from 'react-native';
 import { useAds } from '@/contexts/AdContext';
 
 export default function TabLayout() {
-  const { isPremium, adFreeTrial } = useAds();
   const colorScheme = useColorScheme(); // Use system color scheme for initial tab bar styling
   const isDark = colorScheme === 'dark';
   const tintColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -46,7 +45,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />
           ),
-          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
         }}
       />
       <Tabs.Screen
@@ -56,7 +54,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="navigate-outline" size={size} color={color} />
           ),
-          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
         }}
       />
       <Tabs.Screen
@@ -66,7 +63,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="stats-chart-outline" size={size} color={color} />
           ),
-          tabBarBadge: (!isPremium && !adFreeTrial) ? 'PRO' : undefined,
         }}
       />
       <Tabs.Screen
