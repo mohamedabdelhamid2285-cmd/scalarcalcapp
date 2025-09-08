@@ -144,10 +144,7 @@ export default function VectorScreen() {
           onClose={() => setShowPremiumModal(false)}
         />
       </LinearGradient>
-            <TouchableOpacity 
-              style={[styles.operationButton, { backgroundColor: isLocked ? '#6B7280' : buttonBackgroundColor }]} 
-              onPress={() => handleOperationPress('add')}
-            >
+    </SafeAreaView>
   );
 }
 
