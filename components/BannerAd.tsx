@@ -11,16 +11,31 @@ export default function BannerAd() {
   const textColor = isDark ? '#FFFFFF' : '#1F2937';
   const borderColor = isDark ? '#404040' : '#D1D5DB';
 
+  // Array of different ad content to rotate through
+  const adContent = [
+    {
+      title: "🧮 Advanced Math Tools",
+      subtitle: "Scientific • Engineering • Statistics"
+    },
+    {
+      title: "📊 Data Analysis Made Easy",
+      subtitle: "Vectors • Matrices • Complex calculations"
+    },
+    {
+      title: "⚡ Fast & Accurate Computing",
+      subtitle: "Professional grade calculator"
+    }
+  ];
+
+  // Simple rotation based on current time
+  const currentAd = adContent[Math.floor(Date.now() / 10000) % adContent.length];
+
   return (
     <View style={[styles.container, { backgroundColor, borderColor }]}>
       <Text style={[styles.adLabel, { color: textColor }]}>Advertisement</Text>
       <TouchableOpacity style={styles.adContent}>
-        <Text style={[styles.adText, { color: textColor }]}>
-          📱 Upgrade to Premium Calculator Pro
-        </Text>
-        <Text style={[styles.adSubtext, { color: textColor }]}>
-          Remove ads • Advanced functions • Cloud sync
-        </Text>
+        <Text style={[styles.adText, { color: textColor }]}>{currentAd.title}</Text>
+        <Text style={[styles.adSubtext, { color: textColor }]}>{currentAd.subtitle}</Text>
       </TouchableOpacity>
     </View>
   );

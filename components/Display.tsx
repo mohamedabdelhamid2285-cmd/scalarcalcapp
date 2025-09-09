@@ -64,15 +64,15 @@ export default function Display() {
 
 const styles = StyleSheet.create({
   container: {
-    height: 180,
+    height: 200,
     borderRadius: 16,
     margin: 16,
     padding: 16,
-    elevation: 4,
+    elevation: 6,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
   },
   statusBar: {
     flexDirection: 'row',

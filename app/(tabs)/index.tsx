@@ -56,7 +56,6 @@ export default function CalculatorScreen() {
       >
         <Display />
         <BannerAd />
-        <BannerAd />
         <View style={styles.buttonGrid}>
           {/* Row 1: Scientific Functions */}
           <View style={styles.row}>
@@ -317,12 +316,13 @@ const styles = StyleSheet.create({
   },
   buttonGrid: {
     flex: 1,
-    padding: 16,
-    paddingTop: 8,
+    padding: 12,
+    paddingTop: 4,
   },
   row: {
     flexDirection: 'row',
     flex: 1,
+    marginVertical: 2,
   },
   shiftIndicatorContainer: {
     position: 'absolute',
