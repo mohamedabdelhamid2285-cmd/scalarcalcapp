@@ -331,6 +331,35 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       try {
         if (!state.expression) return resetModes(state);
 
+        // Check for incomplete expressions that would cause SyntaxError
+        const trimmedExpression = state.expression.trim();
+        const incompleteTokens = ['-', '+', '*', '/', '%', '^', '(', ')'];
+        
+        // If expression is just a single incomplete token, reset to clean state
+        if (incompleteTokens.includes(trimmedExpression)) {
+          newState = {
+            ...state,
+            expression: '',
+            result: '0',
+            error: null,
+            lastInputType: null,
+          };
+          return resetModes(newState);
+        }
+
+        // Check for expressions ending with operators (except closing parenthesis)
+        const lastChar = trimmedExpression.slice(-1);
+        if (['+', '-', '*', '/', '%', '^'].includes(lastChar)) {
+          newState = {
+            ...state,
+            expression: '',
+            result: '0',
+            error: null,
+            lastInputType: null,
+          };
+          return resetModes(newState);
+        }
+
         // Ensure angleUnit is a string before comparison
         const angleUnitStr = typeof state.angleUnit === 'string' ? state.angleUnit.toLowerCase().trim() : '';
 
