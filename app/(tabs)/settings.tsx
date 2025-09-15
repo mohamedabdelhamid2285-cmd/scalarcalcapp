@@ -27,8 +27,8 @@ export default function SettingsScreen() {
   };
 
   const clearHistory = () => {
-    // This would clear calculation history
-    dispatch({ type: 'CLEAR_ALL' });
+    // This will now correctly clear calculation history by dispatching the 'CLEAR' action
+    dispatch({ type: 'CLEAR' });
   };
 
   return (
