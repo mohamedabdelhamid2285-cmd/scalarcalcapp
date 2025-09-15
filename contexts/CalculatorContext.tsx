@@ -63,7 +63,7 @@ const initialState: CalculatorState = {
 const isOperator = (char: string) => ['+', '-', '*', '/', '%', '^'].includes(char);
 
 // Helper function to check if a character is a function
-const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log', 'sqrt', 'log10', 'pi', 'e'].includes(char);
+const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log', 'sqrt', 'log10', 'pi', 'e', 'nthRoot'].includes(char);
 
 const calculatorReducer = (state: CalculatorState, action: CalculatorAction): CalculatorState => {
   // Reset alpha/store modes on most actions, unless it's a specific variable action
@@ -86,6 +86,9 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       } else if (newExpression === '0' && action.payload !== '.') {
         // Prevent multiple leading zeros unless it's a decimal
         newExpression = action.payload;
+      } else if (newExpression === '' && action.payload === '.') {
+        // Handle initial '.' input to display '0.'
+        newExpression = '0.';
       } else if (action.payload === '.' && newExpression.includes('.') && state.lastInputType === 'number') {
         // Prevent multiple decimals in a single number
         const lastNumber = newExpression.split(/[\+\-\*\/%()^]/).pop();
@@ -247,14 +250,33 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       };
 
     case 'MEMORY_STORE':
+      console.log('MEMORY_STORE: Action triggered. Payload:', action.payload, 'Current memoryValue:', state.memoryValue); // Debug log
       try {
+        let valueToStore: number;
+        // If the payload is 'Error' or empty, don't store
+        if (action.payload === 'Error' || action.payload === '') {
+          console.log('MEMORY_STORE: Invalid payload, not storing.');
+          return resetModes(state);
+        }
+
+        // Attempt to evaluate the expression if it's not just a number
         const math = create(all);
-        const valueToStore = math.evaluate(action.payload);
+        if (!isNaN(Number(action.payload)) && state.lastInputType !== 'operator') {
+          // If the payload is a number, store it directly
+          valueToStore = Number(action.payload);
+          console.log('MEMORY_STORE: Storing number directly =', valueToStore);
+        } else {
+          // Otherwise, evaluate the expression
+          valueToStore = math.evaluate(action.payload);
+          console.log('MEMORY_STORE: Storing value from expression =', valueToStore);
+        }
+
         newState = {
           ...state,
           memoryValue: valueToStore,
           error: null,
         };
+        console.log('MEMORY_STORE: New memoryValue:', newState.memoryValue); // Debug log
         return resetModes(newState);
       } catch (error) {
         console.error('Memory store error:', error);
@@ -266,20 +288,24 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       }
 
     case 'MEMORY_RECALL':
+      console.log('MEMORY_RECALL: Action triggered. Recalling value =', state.memoryValue); // Debug log
       newState = {
         ...state,
         expression: state.expression + state.memoryValue.toString(),
         lastInputType: 'number',
         error: null,
       };
+      console.log('MEMORY_RECALL: New expression:', newState.expression); // Debug log
       return resetModes(newState);
 
     case 'MEMORY_CLEAR':
+      console.log('MEMORY_CLEAR: Action triggered. Clearing memory.'); // Debug log
       newState = {
         ...state,
         memoryValue: 0,
         error: null,
       };
+      console.log('MEMORY_CLEAR: Memory cleared. New memoryValue:', newState.memoryValue); // Debug log
       return resetModes(newState);
 
     case 'TOGGLE_SHIFT':
@@ -306,6 +332,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       };
 
     case 'STORE_VARIABLE':
+      console.log('STORE_VARIABLE: Storing variable', action.payload.variableName, 'with value', action.payload.value); // Debug log
       newState = {
         ...state,
         variables: {
@@ -331,63 +358,26 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
       try {
         if (!state.expression) return resetModes(state);
 
-        // Check for incomplete expressions that would cause SyntaxError
-        const trimmedExpression = state.expression.trim();
-        const incompleteTokens = ['-', '+', '*', '/', '%', '^', '(', ')'];
-        
-        // If expression is just a single incomplete token, reset to clean state
-        if (incompleteTokens.includes(trimmedExpression)) {
-          newState = {
-            ...state,
-            expression: '',
-            result: '0',
-            error: null,
-            lastInputType: null,
-          };
-          return resetModes(newState);
-        }
-
-        // Check for expressions ending with operators (except closing parenthesis)
-        const lastChar = trimmedExpression.slice(-1);
-        if (['+', '-', '*', '/', '%', '^'].includes(lastChar)) {
-          newState = {
-            ...state,
-            expression: '',
-            result: '0',
-            error: null,
-            lastInputType: null,
-          };
-          return resetModes(newState);
-        }
-
-        // Ensure angleUnit is a string before comparison
-        const angleUnitStr = typeof state.angleUnit === 'string' ? state.angleUnit.toLowerCase().trim() : '';
-
-        // Create a math.js instance and configure it with the current angle unit
         const math = create(all);
         math.config({
-          angle: angleUnitStr === 'deg' ? 'deg' : 'rad', //Explicitly set to 'deg' or 'rad'
+          angle: state.angleUnit, // Use the configured angle unit directly
           number: 'BigNumber',
           precision: 14,
         });
 
-        // AST transformation for trigonometric functions
-        const parseAndTransform = (expr: string, unit: 'deg' | 'rad') => {
-          const node = math.parse(expr);
-          return node.transform(function (node, path, parent) {
-            if (node.type === 'FunctionNode' && ['sin', 'cos', 'tan', 'asin', 'acos', 'atan'].includes(node.fn.name)) {
-              // Wrap the argument with a unit
-              const arg = node.args[0];
-              return new math.FunctionNode(node.fn, [new math.FunctionNode(new math.SymbolNode('unit'), [arg, new math.ConstantNode(unit)])]);
-            }
-            return node;
-          });
-        };
+        // Evaluate the expression directly, passing variables as scope
+        let result = math.evaluate(state.expression, state.variables);
+        let formattedResult = math.format(result, { precision: 14 });
 
-        const transformedNode = parseAndTransform(state.expression, state.angleUnit);
-        // Pass the variables as scope to math.evaluate
-        const result = transformedNode.evaluate(state.variables);
-        const formattedResult = math.format(result, { precision: 14 });
+        // Round very small numbers to 0 for display
+        const numericResult = parseFloat(formattedResult);
+        if (Math.abs(numericResult) < 1e-12) { // If very close to zero
+          formattedResult = '0';
+        } else if (Math.abs(numericResult - Math.round(numericResult)) < 1e-12) {
+          // Round to nearest integer if very close to an integer (e.g., log(e) = 1)
+          formattedResult = Math.round(numericResult).toString();
+        }
+
 
         const newHistory = [
           ...state.history.slice(-9),

@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
-import { useAds } from '@/contexts/AdContext';
-import PremiumModal from '@/components/PremiumModal';
 
 export default function StatisticsScreen() {
   const { state } = useCalculator();
-  const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
@@ -151,13 +148,13 @@ export default function StatisticsScreen() {
                       <Text style={[styles.resultText, { color: textColor }]}>Median: {typeof results.median === 'number' ? results.median.toFixed(4) : results.median}</Text>
                     )}
                     {results.mode !== undefined && results.mode !== null && (
-                       <Text style={[styles.resultText, { color: textColor }]}>Mode: {typeof results.mode === 'number' ? results.mode.toFixed(4) : results.mode}</Text>
+                      <Text style={[styles.resultText, { color: textColor }]}>Mode: {results.mode}</Text>
                     )}
                     {results.stdDev !== undefined && results.stdDev !== null && (
-                       <Text style={[styles.resultText, { color: textColor }]}>Std Dev: {typeof results.stdDev === 'number' ? results.stdDev.toFixed(4) : results.stdDev}</Text>
+                      <Text style={[styles.resultText, { color: textColor }]}>Standard Deviation: {typeof results.stdDev === 'number' ? results.stdDev.toFixed(4) : results.stdDev}</Text>
                     )}
                   </>
-                 )}
+                )}
               </View>
             )}
           </View>
@@ -236,22 +233,5 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 18,
     marginBottom: 5,
-  },
-  lockNotice: {
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-  },
-  lockText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  lockDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    opacity: 0.8,
   },
 });

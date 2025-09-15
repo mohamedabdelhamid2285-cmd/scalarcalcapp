@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
-import { useAds } from '@/contexts/AdContext';
-import PremiumModal from '@/components/PremiumModal';
 
 export default function VectorScreen() {
   const { state } = useCalculator();
-  const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
@@ -20,7 +17,7 @@ export default function VectorScreen() {
   const [vectorB, setVectorB] = useState<number[]>([0, 0, 0]);
   const [resultVector, setResultVector] = useState<number[] | null>(null);
   const [resultScalar, setResultScalar] = useState<number | null>(null);
-  const [operation, setOperation] = useState('');
+  const [currentOperation, setCurrentOperation] = useState('');
 
   const handleVectorAChange = (text: string, index: number) => {
     const newVector = [...vectorA];
@@ -34,9 +31,55 @@ export default function VectorScreen() {
     setVectorB(newVector);
   };
 
-  const handleOperationPress = (op: string) => {
-    setOperation(op);
-    // Add actual vector operation logic here
+  const calculateResult = useCallback(() => {
+    setResultVector(null);
+    setResultScalar(null);
+
+    const a = vectorA;
+    const b = vectorB;
+
+    if (a.length !== b.length && currentOperation !== 'magnitudeA') {
+      Alert.alert("Error", "Vectors must have the same dimension for this operation.");
+      return;
+    }
+
+    switch (currentOperation) {
+      case 'add':
+        setResultVector(a.map((val, i) => val + b[i]));
+        break;
+      case 'subtract':
+        setResultVector(a.map((val, i) => val - b[i]));
+        break;
+      case 'dotProduct':
+        setResultScalar(a.reduce((sum, val, i) => sum + val * b[i], 0));
+        break;
+      case 'crossProduct':
+        if (a.length !== 3 || b.length !== 3) {
+          Alert.alert("Error", "Cross product is only defined for 3D vectors.");
+          return;
+        }
+        setResultVector([
+          a[1] * b[2] - a[2] * b[1],
+          a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0],
+        ]);
+        break;
+      case 'magnitudeA':
+        setResultScalar(Math.sqrt(a.reduce((sum, val) => sum + val * val, 0)));
+        break;
+      default:
+        break;
+    }
+  }, [vectorA, vectorB, currentOperation]);
+
+  useEffect(() => {
+    if (currentOperation) {
+      calculateResult();
+    }
+  }, [currentOperation, vectorA, vectorB, calculateResult]); // Recalculate if vectors or operation changes
+
+  const handleOperationPress = (operation: string) => {
+    setCurrentOperation(operation);
   };
 
   const renderVectorInput = (vector: number[], handleVectorChange: (text: string, index: number) => void) => (
@@ -46,7 +89,7 @@ export default function VectorScreen() {
           key={index}
           style={[styles.vectorComponentInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
           keyboardType="numeric"
-          defaultValue={component.toString()}
+          value={component.toString()} // Use value instead of defaultValue for controlled component
           onChangeText={(text) => handleVectorChange(text, index)}
         />
       ))}
@@ -80,28 +123,28 @@ export default function VectorScreen() {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('add')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('add')}>
                 <Text style={{ color: buttonTextColor }}>Add</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('subtract')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('subtract')}>
                 <Text style={{ color: buttonTextColor }}>Subtract</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('dotProduct')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('dotProduct')}>
                 <Text style={{ color: buttonTextColor }}>Dot Product</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('crossProduct')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('crossProduct')}>
                 <Text style={{ color: buttonTextColor }}>Cross Product</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => setOperation('magnitudeA')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('magnitudeA')}>
                 <Text style={{ color: buttonTextColor }}>Magnitude A</Text>
               </TouchableOpacity>
             </View>
 
             {(resultVector || resultScalar !== null) && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({operation})</Text>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({currentOperation})</Text>
                 {resultVector && renderVectorOutput(resultVector)}
                 {resultScalar !== null && (
                   <Text style={[styles.resultText, { color: textColor }]}>
@@ -188,22 +231,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 10,
-  },
-  lockNotice: {
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-  },
-  lockText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  lockDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    opacity: 0.8,
   },
 });

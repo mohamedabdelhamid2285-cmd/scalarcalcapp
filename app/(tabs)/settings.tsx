@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
-import { useAds } from '@/contexts/AdContext';
 import CalculatorButton from '@/components/CalculatorButton';
-import PremiumModal from '@/components/PremiumModal';
+import { PrivacyPolicyContent } from '@/components/PrivacyPolicyContent';
+import { TermsOfServiceContent } from '@/components/TermsOfServiceContent';
 
 export default function SettingsScreen() {
   const { state, dispatch } = useCalculator();
@@ -170,6 +170,17 @@ export default function SettingsScreen() {
             </Text>
           </View>
 
+          {/* Legal Documents */}
+          <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
+            <Text style={[styles.cardTitle, { color: textColor }]}>Legal</Text>
+            <View style={styles.legalSection}>
+              <PrivacyPolicyContent textColor={textColor} />
+            </View>
+            <View style={styles.legalSection}>
+              <TermsOfServiceContent textColor={textColor} />
+            </View>
+          </View>
+
           {/* About */}
           <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
             <Text style={[styles.cardTitle, { color: textColor }]}>About ScalarCalc</Text>
@@ -267,32 +278,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 4,
   },
-  premiumStatus: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  premiumText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  premiumDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 12,
-    opacity: 0.8,
-  },
-  upgradeButton: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  upgradeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   manualSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -303,5 +288,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 5,
+  },
+  legalSection: {
+    marginBottom: 20,
   },
 });

@@ -48,20 +48,20 @@ export default function CalculatorButton({
 
   const buttonStyle: ViewStyle = {
     flex,
-    margin: 3,
-    borderRadius: 16,
+    margin: 4,
+    borderRadius: 12,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   };
 
   const textStyle: TextStyle = {
     color: getTextColor(),
     fontSize,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
   };
 
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 18,
-    minHeight: 60,
+    paddingVertical: 16,
   },
 });

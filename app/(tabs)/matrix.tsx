@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
-import { useAds } from '@/contexts/AdContext';
-import PremiumModal from '@/components/PremiumModal';
 
 export default function MatrixScreen() {
   const { state } = useCalculator();
-  const { showInterstitialAd } = useAds();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
@@ -21,9 +18,10 @@ export default function MatrixScreen() {
   const [rowsA, setRowsA] = useState('2');
   const [colsA, setColsA] = useState('2');
   const [rowsB, setRowsB] = useState('2');
-  const [colsB, setColsB] = useState('2'); // Corrected: setColsB instead of setColsA
+  const [colsB, setColsB] = useState('2');
   const [resultMatrix, setResultMatrix] = useState<number[][] | null>(null);
-  const [operation, setOperation] = useState('');
+  const [resultScalar, setResultScalar] = useState<number | null>(null); // For determinant
+  const [currentOperation, setCurrentOperation] = useState('');
 
   const createMatrix = (rows: string, cols: string) => {
     const numRows = parseInt(rows);
@@ -44,11 +42,6 @@ export default function MatrixScreen() {
     setMatrixB(newMatrix);
   };
 
-  const handleOperationPress = (op: string) => {
-    setOperation(op);
-    // Add actual matrix operation logic here
-  };
-
   const updateMatrixDimensions = (matrixType: 'A' | 'B', rows: string, cols: string) => {
     if (matrixType === 'A') {
       setRowsA(rows);
@@ -61,6 +54,102 @@ export default function MatrixScreen() {
     }
   };
 
+  const calculateMatrixResult = useCallback(() => {
+    setResultMatrix(null);
+    setResultScalar(null);
+
+    const numRowsA = matrixA.length;
+    const numColsA = matrixA[0]?.length || 0;
+    const numRowsB = matrixB.length;
+    const numColsB = matrixB[0]?.length || 0;
+
+    try {
+      switch (currentOperation) {
+        case 'add':
+          if (numRowsA !== numRowsB || numColsA !== numColsB) {
+            Alert.alert("Error", "Matrices must have the same dimensions for addition.");
+            return;
+          }
+          const sumMatrix = Array(numRowsA).fill(0).map((_, r) =>
+            Array(numColsA).fill(0).map((_, c) => matrixA[r][c] + matrixB[r][c])
+          );
+          setResultMatrix(sumMatrix);
+          break;
+
+        case 'subtract':
+          if (numRowsA !== numRowsB || numColsA !== numColsB) {
+            Alert.alert("Error", "Matrices must have the same dimensions for subtraction.");
+            return;
+          }
+          const diffMatrix = Array(numRowsA).fill(0).map((_, r) =>
+            Array(numColsA).fill(0).map((_, c) => matrixA[r][c] - matrixB[r][c])
+          );
+          setResultMatrix(diffMatrix);
+          break;
+
+        case 'multiply':
+          if (numColsA !== numRowsB) {
+            Alert.alert("Error", "Number of columns in Matrix A must equal number of rows in Matrix B for multiplication.");
+            return;
+          }
+          const productMatrix = Array(numRowsA).fill(0).map((_, r) =>
+            Array(numColsB).fill(0).map((_, c) => {
+              let sum = 0;
+              for (let k = 0; k < numColsA; k++) {
+                sum += matrixA[r][k] * matrixB[k][c];
+              }
+              return sum;
+            })
+          );
+          setResultMatrix(productMatrix);
+          break;
+
+        case 'transposeA':
+          const transposedMatrixA = Array(numColsA).fill(0).map((_, c) =>
+            Array(numRowsA).fill(0).map((_, r) => matrixA[r][c])
+          );
+          setResultMatrix(transposedMatrixA);
+          break;
+
+        case 'determinantA':
+          if (numRowsA !== numColsA) {
+            Alert.alert("Error", "Determinant is only defined for square matrices.");
+            return;
+          }
+          if (numRowsA === 1) {
+            setResultScalar(matrixA[0][0]);
+          } else if (numRowsA === 2) {
+            setResultScalar(matrixA[0][0] * matrixA[1][1] - matrixA[0][1] * matrixA[1][0]);
+          } else if (numRowsA === 3) {
+            const det =
+              matrixA[0][0] * (matrixA[1][1] * matrixA[2][2] - matrixA[1][2] * matrixA[2][1]) -
+              matrixA[0][1] * (matrixA[1][0] * matrixA[2][2] - matrixA[1][2] * matrixA[2][0]) +
+              matrixA[0][2] * (matrixA[1][0] * matrixA[2][1] - matrixA[1][1] * matrixA[2][0]);
+            setResultScalar(det);
+          } else {
+            Alert.alert("Error", "Determinant calculation for matrices larger than 3x3 is not implemented yet.");
+          }
+          break;
+
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Matrix calculation error:", error);
+      Alert.alert("Calculation Error", "An error occurred during matrix calculation.");
+    }
+  }, [matrixA, matrixB, currentOperation]);
+
+  useEffect(() => {
+    if (currentOperation) {
+      calculateMatrixResult();
+    }
+  }, [currentOperation, matrixA, matrixB, calculateMatrixResult]);
+
+  const handleOperationPress = (operation: string) => {
+    setCurrentOperation(operation);
+  };
+
   const renderMatrixInput = (matrix: number[][], handleMatrixChange: (text: string, r: number, c: number) => void) => (
     <View style={styles.matrixGrid}>
       {matrix.map((row, rIdx) => (
@@ -70,7 +159,7 @@ export default function MatrixScreen() {
               key={`${rIdx}-${cIdx}`}
               style={[styles.matrixCellInput, { backgroundColor: inputBackgroundColor, color: textColor }]}
               keyboardType="numeric"
-              defaultValue={cell.toString()}
+              value={cell.toString()} // Use value for controlled component
               onChangeText={(text) => handleMatrixChange(text, rIdx, cIdx)}
             />
           ))}
@@ -152,44 +241,34 @@ export default function MatrixScreen() {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
-                onPress={() => handleOperationPress('add')}
-              >
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('add')}>
                 <Text style={{ color: buttonTextColor }}>Add</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
-                onPress={() => handleOperationPress('subtract')}
-              >
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('subtract')}>
                 <Text style={{ color: buttonTextColor }}>Subtract</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
-                onPress={() => handleOperationPress('multiply')}
-              >
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('multiply')}>
                 <Text style={{ color: buttonTextColor }}>Multiply</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
-                onPress={() => handleOperationPress('transposeA')}
-              >
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('transposeA')}>
                 <Text style={{ color: buttonTextColor }}>Transpose A</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} 
-                onPress={() => handleOperationPress('determinantA')}
-              >
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('determinantA')}>
                 <Text style={{ color: buttonTextColor }}>Determinant A</Text>
               </TouchableOpacity>
             </View>
 
-            {resultMatrix && (
+            {(resultMatrix || resultScalar !== null) && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({operation})</Text>
-                {renderMatrix(resultMatrix)}
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Result ({currentOperation})</Text>
+                {resultMatrix && renderMatrix(resultMatrix)}
+                {resultScalar !== null && (
+                  <Text style={[styles.resultText, { color: textColor }]}>
+                    {resultScalar.toFixed(2)}
+                  </Text>
+                )}
               </View>
             )}
           </View>
@@ -292,21 +371,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 100,
   },
-  lockNotice: {
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-  },
-  lockText: {
-    fontSize: 16,
+  resultText: {
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  lockDescription: {
-    fontSize: 14,
-    textAlign: 'center',
-    opacity: 0.8,
+    marginTop: 10,
   },
 });
