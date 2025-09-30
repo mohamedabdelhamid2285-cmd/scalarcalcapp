@@ -97,6 +97,9 @@ export default function SettingsScreen() {
               <Text style={[styles.settingLabel, { color: textColor }]}>
                 Calculation History ({state.history.length} entries)
               </Text>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Main Calculator Count: {state.calculationCount}/10 (until next ad)
+              </Text>
               {state.history.length > 0 && (
                 <ScrollView style={styles.historyList} nestedScrollEnabled>
                   {state.history.slice(-5).reverse().map((entry, index) => (
@@ -156,10 +159,18 @@ export default function SettingsScreen() {
 
             <Text style={[styles.manualSectionTitle, { color: textColor }]}>Variable Storage (ALPHA + STO)</Text>
             <Text style={[styles.manualText, { color: textColor }]}>
-              - **ALPHA:** Activates variable input mode.
-              - **STO (Store):** Used with ALPHA to store a value into a variable (A, B, C, X, Y).
-                - *Example:* To store 10 into variable A: `10` then `STO` then `ALPHA` then `A`.
-              - **Recalling Variables:** Press `ALPHA` then the variable key (A, B, C, X, Y) to insert its value into the expression.
+		Storing a Number in a Variable (e.g., Variable A)
+
+		 1. Enter the value:Type the number or calculate the expression you want to store. For example, type 10.
+		 2. Initiate Store Mode: Press the `STO` button. You will see the "STO" indicator light up in the display.
+		3. Select Variable: Press the variable button where you want to store the value. For example, press the button that currently shows `STO->A` (which is the "Ans"			button in normal mode).
+		4.  The value (e.g., `10`) will be stored in variable `A`, and the "STO" indicator will turn off. The display will show the stored value as the result.
+
+
+ 
+
+
+              
             </Text>
 
             <Text style={[styles.manualSectionTitle, { color: textColor }]}>Settings</Text>
@@ -185,7 +196,7 @@ export default function SettingsScreen() {
           <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
             <Text style={[styles.cardTitle, { color: textColor }]}>About ScalarCalc</Text>
             <Text style={[styles.aboutText, { color: textColor }]}>
-              Version: 1.0.0
+              Version: 4.0.0
             </Text>
             <Text style={[styles.aboutText, { color: textColor }]}>
               Advanced scientific calculator with 400+ mathematical functions

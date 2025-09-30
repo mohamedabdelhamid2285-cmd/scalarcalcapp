@@ -7,6 +7,7 @@ import { CalculatorProvider } from '@/contexts/CalculatorContext';
 export default function RootLayout() {
   useFrameworkReady();
 
+
   return (
     <CalculatorProvider>
       <Stack screenOptions={{ headerShown: false }}>

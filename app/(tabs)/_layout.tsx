@@ -1,12 +1,21 @@
 import { Tabs } from 'expo-router';
 import { CalculatorProvider } from '@/contexts/CalculatorContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native'; // Import useColorScheme
+import { useColorScheme } from 'react-native';
+
+// Define custom colors for advanced function tabs
+const CUSTOM_COLORS = {
+  matrix: '#06B6D4', // Cyan
+  vector: '#8B5CF6', // Violet
+  statistics: '#F59E0B', // Amber
+};
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme(); // Use system color scheme for initial tab bar styling
+  const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const tintColor = isDark ? '#FFFFFF' : '#1F2937';
+  
+  // Default colors for Calculator and Settings tabs
+  const defaultTintColor = isDark ? '#FFFFFF' : '#1F2937';
   const inactiveTintColor = isDark ? '#A0A0A0' : '#6B7280';
   const tabBarBackground = isDark ? '#1E1E1E' : '#FFFFFF';
 
@@ -15,7 +24,6 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: tintColor,
           tabBarInactiveTintColor: inactiveTintColor,
           tabBarStyle: {
             backgroundColor: tabBarBackground,
@@ -34,6 +42,7 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Calculator',
+            tabBarActiveTintColor: defaultTintColor, // Use default theme color
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="calculator-outline" size={size} color={color} />
             ),
@@ -43,6 +52,7 @@ export default function TabLayout() {
           name="matrix"
           options={{
             title: 'Matrix',
+            tabBarActiveTintColor: CUSTOM_COLORS.matrix, // Custom color
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="grid-outline" size={size} color={color} />
             ),
@@ -52,6 +62,7 @@ export default function TabLayout() {
           name="vector"
           options={{
             title: 'Vector',
+            tabBarActiveTintColor: CUSTOM_COLORS.vector, // Custom color
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="navigate-outline" size={size} color={color} />
             ),
@@ -61,6 +72,7 @@ export default function TabLayout() {
           name="statistics"
           options={{
             title: 'Statistics',
+            tabBarActiveTintColor: CUSTOM_COLORS.statistics, // Custom color
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="stats-chart-outline" size={size} color={color} />
             ),
@@ -70,6 +82,7 @@ export default function TabLayout() {
           name="settings"
           options={{
             title: 'Settings',
+            tabBarActiveTintColor: defaultTintColor, // Use default theme color
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="settings-outline" size={size} color={color} />
             ),

@@ -1,31 +1,38 @@
 {
-  "expo": {
-    "name": "ScalarCalc",
-    "slug": "scalarcalc-app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/app-icon.png",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/app-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/app-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.itmo.scalarcalcapp"
-    },
-    "web": {
-      "favicon": "./assets/images/favicon.png"
+      "expo": {
+        "name": "ScalarCalc",
+        "slug": "scalarcalc-app",
+        "version": "3.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/images/app-icon.png",
+        "userInterfaceStyle": "automatic",
+        "splash": {
+          "image": "./assets/images/app-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        },
+        "assetBundlePatterns": [
+          "**/*"
+        ],
+        "ios": {
+          "supportsTablet": true
+        },
+        "android": {
+          "adaptiveIcon": {
+            "foregroundImage": "./assets/images/app-icon.png",
+            "backgroundColor": "#ffffff"
+          },
+          "package": "com.itmo.scalarcalcapp",
+          "config": {
+            "googleMobileAdsAppId": "ca-app-pub-4737600375746657~8858389291"
+          }
+        },
+        "web": {
+          "favicon": "./assets/images/favicon.png"
+        },
+        "extra": {
+          "scalarCalcBanners": "ca-app-pub-4737600375746657/3340175596",
+          "scalarCalcInterstitial": "ca-app-pub-4737600375746657/9979899277"
+        }
+      }
     }
-  }
-}

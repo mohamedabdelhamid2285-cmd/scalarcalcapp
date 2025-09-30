@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import BannerAdComponent from '@/components/BannerAdComponent';
 
 export default function VectorScreen() {
   const { state } = useCalculator();
+  const { showInterstitialAd } = useInterstitialAd();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
@@ -13,11 +16,21 @@ export default function VectorScreen() {
   const buttonBackgroundColor = isDark ? '#4A4A4A' : '#D1D5DB';
   const buttonTextColor = isDark ? '#FFFFFF' : '#1F2937';
 
+  // Define specific colors for operation buttons
+  const operationButtonColors = {
+    add: isDark ? ['#06B6D4', '#0E7490'] : ['#22D3EE', '#0891B2'], // Cyan gradient
+    subtract: isDark ? ['#8B5CF6', '#6D28D9'] : ['#A78BFA', '#9333EA'], // Violet gradient
+    dotProduct: isDark ? ['#F59E0B', '#D97706'] : ['#FBBF24', '#F59E0B'], // Amber gradient
+    crossProduct: isDark ? ['#10B981', '#059669'] : ['#34D399', '#047857'], // Green gradient
+    magnitude: isDark ? ['#EF4444', '#DC2626'] : ['#F87171', '#E11D48'], // Red gradient
+  };
+
   const [vectorA, setVectorA] = useState<number[]>([0, 0, 0]);
   const [vectorB, setVectorB] = useState<number[]>([0, 0, 0]);
   const [resultVector, setResultVector] = useState<number[] | null>(null);
   const [resultScalar, setResultScalar] = useState<number | null>(null);
   const [currentOperation, setCurrentOperation] = useState('');
+  const [hasShownResult, setHasShownResult] = useState(false);
 
   const handleVectorAChange = (text: string, index: number) => {
     const newVector = [...vectorA];
@@ -34,6 +47,7 @@ export default function VectorScreen() {
   const calculateResult = useCallback(() => {
     setResultVector(null);
     setResultScalar(null);
+    setHasShownResult(false);
 
     const a = vectorA;
     const b = vectorB;
@@ -46,12 +60,15 @@ export default function VectorScreen() {
     switch (currentOperation) {
       case 'add':
         setResultVector(a.map((val, i) => val + b[i]));
+        setHasShownResult(true);
         break;
       case 'subtract':
         setResultVector(a.map((val, i) => val - b[i]));
+        setHasShownResult(true);
         break;
       case 'dotProduct':
         setResultScalar(a.reduce((sum, val, i) => sum + val * b[i], 0));
+        setHasShownResult(true);
         break;
       case 'crossProduct':
         if (a.length !== 3 || b.length !== 3) {
@@ -63,14 +80,23 @@ export default function VectorScreen() {
           a[2] * b[0] - a[0] * b[2],
           a[0] * b[1] - a[1] * b[0],
         ]);
+        setHasShownResult(true);
         break;
       case 'magnitudeA':
         setResultScalar(Math.sqrt(a.reduce((sum, val) => sum + val * val, 0)));
+        setHasShownResult(true);
         break;
       default:
         break;
     }
   }, [vectorA, vectorB, currentOperation]);
+
+  // Show interstitial ad after successful calculation
+  useEffect(() => {
+    if (hasShownResult) {
+      showInterstitialAd();
+    }
+  }, [hasShownResult, showInterstitialAd]);
 
   useEffect(() => {
     if (currentOperation) {
@@ -123,21 +149,21 @@ export default function VectorScreen() {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('add')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.add[isDark ? 0 : 1] }]} onPress={() => handleOperationPress('add')}>
                 <Text style={{ color: buttonTextColor }}>Add</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('subtract')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.subtract[isDark ? 0 : 1] }]} onPress={() => handleOperationPress('subtract')}>
                 <Text style={{ color: buttonTextColor }}>Subtract</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('dotProduct')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.dotProduct[isDark ? 0 : 1] }]} onPress={() => handleOperationPress('dotProduct')}>
                 <Text style={{ color: buttonTextColor }}>Dot Product</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('crossProduct')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.crossProduct[isDark ? 0 : 1] }]} onPress={() => handleOperationPress('crossProduct')}>
                 <Text style={{ color: buttonTextColor }}>Cross Product</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleOperationPress('magnitudeA')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.magnitude[isDark ? 0 : 1] }]} onPress={() => handleOperationPress('magnitudeA')}>
                 <Text style={{ color: buttonTextColor }}>Magnitude A</Text>
               </TouchableOpacity>
             </View>
@@ -155,6 +181,9 @@ export default function VectorScreen() {
             )}
           </View>
         </ScrollView>
+        
+        {/* Banner Ad at bottom */}
+        <BannerAdComponent />
       </LinearGradient>
     </SafeAreaView>
   );

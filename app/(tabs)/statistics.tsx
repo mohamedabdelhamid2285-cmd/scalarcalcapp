@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCalculator } from '@/contexts/CalculatorContext';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import BannerAdComponent from '@/components/BannerAdComponent';
+
+import { useEffect } from 'react';
 
 export default function StatisticsScreen() {
   const { state } = useCalculator();
+  const { showInterstitialAd } = useInterstitialAd();
   const isDark = state.theme === 'dark';
 
   const backgroundColors = isDark ? ['#121212', '#1E1E1E'] : ['#F3F4F6', '#FFFFFF'];
@@ -13,8 +18,18 @@ export default function StatisticsScreen() {
   const buttonBackgroundColor = isDark ? '#4A4A4A' : '#D1D5DB';
   const buttonTextColor = isDark ? '#FFFFFF' : '#1F2937';
 
+  // Define specific colors for operation buttons
+  const operationButtonColors = {
+    mean: isDark ? ['#06B6D4', '#0E7490'] : ['#22D3EE', '#0891B2'], // Cyan gradient
+    median: isDark ? ['#8B5CF6', '#6D28D9'] : ['#A78BFA', '#9333EA'], // Violet gradient
+    mode: isDark ? ['#F59E0B', '#D97706'] : ['#FBBF24', '#F59E0B'], // Amber gradient
+    stdDev: isDark ? ['#10B981', '#059669'] : ['#34D399', '#047857'], // Green gradient
+    all: isDark ? ['#EF4444', '#DC2626'] : ['#F87171', '#E11D48'], // Red gradient
+  };
+
   const [dataInput, setDataInput] = useState('');
   const [results, setResults] = useState<{ [key: string]: number | string | null }>({});
+  const [hasShownResult, setHasShownResult] = useState(false);
 
   const parseData = (input: string): number[] => {
     return input.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
@@ -66,6 +81,7 @@ export default function StatisticsScreen() {
     const data = parseData(dataInput);
     if (data.length === 0) {
       setResults({ error: 'Please enter valid numbers.' });
+      setHasShownResult(false);
       return;
     }
 
@@ -73,25 +89,37 @@ export default function StatisticsScreen() {
     switch (type) {
       case 'mean':
         newResults.mean = calculateMean(data);
+        setHasShownResult(true);
         break;
       case 'median':
         newResults.median = calculateMedian(data);
+        setHasShownResult(true);
         break;
       case 'mode':
         newResults.mode = calculateMode(data);
+        setHasShownResult(true);
         break;
       case 'stdDev':
         newResults.stdDev = calculateStdDev(data);
+        setHasShownResult(true);
         break;
       case 'all':
         newResults.mean = calculateMean(data);
         newResults.median = calculateMedian(data);
         newResults.mode = calculateMode(data);
         newResults.stdDev = calculateStdDev(data);
+        setHasShownResult(true);
         break;
     }
     setResults(newResults);
   };
+
+  // Show interstitial ad after successful calculation
+  useEffect(() => {
+    if (hasShownResult) {
+      showInterstitialAd();
+    }
+  }, [hasShownResult, showInterstitialAd]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -115,21 +143,21 @@ export default function StatisticsScreen() {
             />
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('mean')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.mean[isDark ? 0 : 1] }]} onPress={() => handleCalculate('mean')}>
                 <Text style={{ color: buttonTextColor }}>Mean</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('median')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.median[isDark ? 0 : 1] }]} onPress={() => handleCalculate('median')}>
                 <Text style={{ color: buttonTextColor }}>Median</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('mode')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.mode[isDark ? 0 : 1] }]} onPress={() => handleCalculate('mode')}>
                 <Text style={{ color: buttonTextColor }}>Mode</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('stdDev')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.stdDev[isDark ? 0 : 1] }]} onPress={() => handleCalculate('stdDev')}>
                 <Text style={{ color: buttonTextColor }}>Std Dev</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.operationButton, { backgroundColor: buttonBackgroundColor }]} onPress={() => handleCalculate('all')}>
+              <TouchableOpacity style={[styles.operationButton, { backgroundColor: operationButtonColors.all[isDark ? 0 : 1] }]} onPress={() => handleCalculate('all')}>
                 <Text style={{ color: buttonTextColor }}>Calculate All</Text>
               </TouchableOpacity>
             </View>
@@ -159,6 +187,9 @@ export default function StatisticsScreen() {
             )}
           </View>
         </ScrollView>
+        
+        {/* Banner Ad at bottom */}
+        <BannerAdComponent />
       </LinearGradient>
     </SafeAreaView>
   );

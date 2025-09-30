@@ -54,7 +54,7 @@ export const TermsOfServiceContent = ({ textColor }: { textColor: string }) => {
 
       <Text style={[styles.heading2, { color: textColor }]}>Governing Law</Text>
       <Text style={[styles.paragraph, { color: textColor }]}>
-        These Terms shall be governed and construed in accordance with the laws of [Your Jurisdiction].
+        These Terms shall be governed and construed in accordance with the laws of Germany.
       </Text>
 
       <Text style={[styles.heading2, { color: textColor }]}>Contact Us</Text>
