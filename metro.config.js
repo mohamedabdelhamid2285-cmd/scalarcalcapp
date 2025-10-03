@@ -1,16 +1,18 @@
-// metro.config.js
-    const { getDefaultConfig } = require('expo/metro-config');
-    const path = require('path');
+const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
-    const config = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname);
 
-    config.resolver.assetExts.push('cjs');
+config.resolver.assetExts.push('cjs');
 
-    // Map react-native-google-mobile-ads to a stub module for web builds
-    // This prevents native code from being included in web bundles.
-    config.resolver.extraNodeModules = {
-      ...config.resolver.extraNodeModules,
-      'react-native-google-mobile-ads': path.resolve(__dirname, './utils/stubMobileAds.ts'),
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'react-native-google-mobile-ads' && platform === 'web') {
+    return {
+      filePath: path.resolve(__dirname, './utils/stubMobileAds.ts'),
+      type: 'sourceFile',
     };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
-    module.exports = config;
+module.exports = config;
