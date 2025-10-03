@@ -68,7 +68,7 @@ const initialState: CalculatorState = {
     'Y': 0,
   },
   calculationCount: 0, // Initialize calculation count
-  locale: 'en-US', // Default locale for number formatting
+  locale: 'default', // Use device locale automatically
 };
 
 // Helper function to check if a character is an operator
@@ -94,21 +94,27 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
     selectedVariable: null,
   });
 
-  // Helper to format numbers based on locale
+  // Helper to format numbers based on locale for DISPLAY ONLY
   const formatNumber = (num: number | string): string => {
     try {
       const numberValue = typeof num === 'string' ? parseFloat(num) : num;
-      if (isNaN(numberValue)) return String(num); // Return as is if not a valid number
+      if (isNaN(numberValue)) return String(num);
 
-      // Use Intl.NumberFormat for locale-specific formatting
-      return new Intl.NumberFormat(state.locale, {
-        useGrouping: true, // Enable grouping (thousands separators)
-        maximumFractionDigits: 14, // Match mathjs precision
-      }).format(numberValue);
+      // Use device locale without explicitly defining it
+      return numberValue.toLocaleString(undefined, {
+        maximumFractionDigits: 14,
+        useGrouping: true,
+      });
     } catch (e) {
-      console.error("Error formatting number:", e);
-      return String(num); // Fallback to string representation
+      return String(num);
     }
+  };
+
+  // Helper to remove formatting from a string (for calculations)
+  const unformatNumber = (str: string): string => {
+    // Remove all grouping separators (commas, spaces, dots used as separators)
+    // Keep only digits, decimal point, minus sign, and 'e' for scientific notation
+    return str.replace(/[^0-9.eE\-+]/g, '');
   };
 
   switch (action.type) {
@@ -314,7 +320,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
     case 'MEMORY_RECALL':
       return {
         ...state,
-        expression: state.expression + formatNumber(state.memoryValue),
+        expression: state.expression + state.memoryValue.toString(),
         lastInputType: 'number',
         error: null,
         ...resetVariableModes(),

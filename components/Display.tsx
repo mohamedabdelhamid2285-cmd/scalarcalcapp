@@ -69,10 +69,10 @@ import React from 'react';
           {/* Variable Status Bar */}
           {Object.entries(state.variables).some(([_, value]) => value !== 0) && (
             <View style={styles.variableBar}>
-              {Object.entries(state.variables).map(([variable, value]) => 
+              {Object.entries(state.variables).map(([variable, value]) =>
                 value !== 0 ? (
                   <Text key={variable} style={[styles.variableText, { color: textColor }]}>
-                    {variable}={value.toFixed(2)}
+                    {variable}={value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                   </Text>
                 ) : null
               )}
