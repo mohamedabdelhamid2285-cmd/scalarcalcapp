@@ -61,7 +61,9 @@
           "android": {
             "manifestPlaceholders": {
               "googleMobileAdsAppId": "ca-app-pub-4737600375746657~8858389291"
-            }
+            },
+            "enableProguardInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.itmo.scalarcalcapp.** { *; }"
           }
         }
       ],
