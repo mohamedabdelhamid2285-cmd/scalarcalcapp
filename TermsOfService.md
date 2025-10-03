@@ -12,9 +12,9 @@ The App is provided for your personal, non-commercial use. You may use the App t
 
 You agree not to:
 
-*   Use the App for any illegal or unauthorized purpose.
-*   Interfere with or disrupt the operation of the App.
-*   Attempt to gain unauthorized access to any part of the App.
+* Use the App for any illegal or unauthorized purpose.
+* Interfere with or disrupt the operation of the App.
+* Attempt to gain unauthorized access to any part of the App.
 
 ## Intellectual Property
 
@@ -31,10 +31,6 @@ In no event shall we be liable for any damages whatsoever (including, without li
 ## Changes to the Terms
 
 We may modify these Terms at any time. We will notify you of any changes by posting the new Terms on this page.
-
-## Governing Law
-
-These Terms shall be governed and construed in accordance with the laws of Germany.
 
 ## Contact Us
 

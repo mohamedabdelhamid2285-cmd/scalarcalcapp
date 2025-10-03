@@ -10,22 +10,22 @@ We do not collect any personally identifiable information (PII) from you directl
 
 We may collect non-personal information, such as:
 
-*   Usage data: Information about how you use the App, such as the features you use, the calculations you perform, and the frequency of your use.
-*   Device information: Information about your device, such as the device type, operating system, and unique device identifiers.
+* Usage data: Information about how you use the App, such as the features you use, the calculations you perform, and the frequency of your use.
+* Device information: Information about your device, such as the device type, operating system, and unique device identifiers.
 
 ## How We Use Your Information
 
 We use the non-personal information we collect to:
 
-*   Improve the App's functionality and user experience.
-*   Analyze usage trends and patterns.
-*   Monitor the performance of the App.
+* Improve the App's functionality and user experience.
+* Analyze usage trends and patterns.
+* Monitor the performance of the App.
 
 ## Third-Party Services
 
 The App uses Google AdMob, an advertising service provided by Google LLC. AdMob may collect and use certain information from your device to provide personalized advertisements. This information may include device identifiers, location data, and usage data.
 
-For more information on how Google uses data, please visit Google's Privacy & Terms page: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+For more information on how Google uses data, please visit Google's Privacy \& Terms page: [https://policies.google.com/privacy](https://policies.google.com/privacy)
 
 ## Sharing of Your Information
 

@@ -196,7 +196,7 @@ export default function SettingsScreen() {
           <View style={[styles.settingCard, { backgroundColor: cardBgColor }]}>
             <Text style={[styles.cardTitle, { color: textColor }]}>About ScalarCalc</Text>
             <Text style={[styles.aboutText, { color: textColor }]}>
-              Version: 4.0.0
+              Version: 6.0.0
             </Text>
             <Text style={[styles.aboutText, { color: textColor }]}>
               Advanced scientific calculator with 400+ mathematical functions

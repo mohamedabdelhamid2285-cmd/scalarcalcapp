@@ -1,38 +1,67 @@
 {
-      "expo": {
-        "name": "ScalarCalc",
-        "slug": "scalarcalc-app",
-        "version": "3.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/images/app-icon.png",
-        "userInterfaceStyle": "automatic",
-        "splash": {
-          "image": "./assets/images/app-icon.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        },
-        "assetBundlePatterns": [
-          "**/*"
-        ],
-        "ios": {
-          "supportsTablet": true
-        },
-        "android": {
-          "adaptiveIcon": {
-            "foregroundImage": "./assets/images/app-icon.png",
-            "backgroundColor": "#ffffff"
-          },
-          "package": "com.itmo.scalarcalcapp",
-          "config": {
-            "googleMobileAdsAppId": "ca-app-pub-4737600375746657~8858389291"
-          }
-        },
-        "web": {
-          "favicon": "./assets/images/favicon.png"
-        },
-        "extra": {
-          "scalarCalcBanners": "ca-app-pub-4737600375746657/3340175596",
-          "scalarCalcInterstitial": "ca-app-pub-4737600375746657/9979899277"
-        }
+  "expo": {
+    "name": "ScalarCalc",
+    "slug": "scalarcalc-app",
+    "version": "6.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/app-icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/app-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/app-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.itmo.scalarcalcapp",
+      
+      // ⚠️ 1. إضافة إذن AD_ID هنا مباشرةً (لنجعل Expo يضيفه)
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID"
+      ]
+    },
+    
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "extra": {
+      "scalarCalcBanners": "ca-app-pub-4737600375746657/3340175596",
+      "scalarCalcInterstitial": "ca-app-pub-4737600375746657/9979899277",
+      "router": {},
+      "eas": {
+        "projectId": "3fb9df95-35cc-440c-b92f-abf8568339fc"
       }
-    }
+    },
+    
+    "plugins": [
+      // ⚠️ 2. إضافة مُعرّف AdMob باستخدام Manifest Placeholders
+      // هذا يُجبر مُعرّف التطبيق على الدخول في Manifest بشكل مباشر
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "manifestPlaceholders": {
+              "googleMobileAdsAppId": "ca-app-pub-4737600375746657~8858389291"
+            }
+          }
+        }
+      ],
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      
+      // ⚠️ 3. إضافة المكوّن الإضافي الخاص بالإعلانات (لربط المكتبات)
+      "react-native-google-mobile-ads"
+    ]
+  }
+}

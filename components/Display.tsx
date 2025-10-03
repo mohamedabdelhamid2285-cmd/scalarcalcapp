@@ -21,6 +21,20 @@ import React from 'react';
       displayedExpression = displayedExpression.replace(/nthRoot\(/g, 'y√x(');
       displayedExpression = displayedExpression.replace(/log\(/g, 'ln(');
 
+      // Format the expression with thousands separators
+      const formatExpression = (expr: string): string => {
+        if (expr === '' || expr === '0') return expr;
+        try {
+          // Use Intl.NumberFormat for locale-specific formatting
+          return new Intl.NumberFormat(state.locale, {
+            useGrouping: true, // Enable grouping (thousands separators)
+            maximumFractionDigits: 14, // Match mathjs precision
+          }).format(parseFloat(expr));
+        } catch (e) {
+          console.error("Error formatting expression:", e);
+          return expr; // Fallback to original expression
+        }
+      };
 
       return (
         <LinearGradient
@@ -31,7 +45,7 @@ import React from 'react';
         >
           <View style={styles.statusBar}>
             <Text style={[styles.angleUnit, { color: textColor }]}>
-              {state.angleUnit.toUpperCase()}
+              {state.angleUnit === 'deg' ? 'DEG' : 'RAD'}
             </Text>
             <View style={styles.modeIndicators}>
               {state.memoryValue !== 0 && (
@@ -83,7 +97,7 @@ import React from 'react';
             {/* Display the current expression being typed */}
             {state.expression !== '' && (
               <Text style={[styles.expression, { color: expressionColor }]}>
-                {displayedExpression}
+                {formatExpression(displayedExpression)}
               </Text>
             )}
             {/* Display the result or error */}

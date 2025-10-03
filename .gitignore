@@ -1,35 +1,35 @@
-# dependencies
-node_modules/
-
-# expo
 .expo/
-dist/
-web-build/
-expo-env.d.ts
+# dependencies
+/node_modules
 
-# native
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
-# macos
+# misc
 .DS_Store
-*.pem
-
-# local env files
-.env*.local
 .env
+.env.local
+.expo/
+.expo-shared/
+.yarn/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
 
-# typescript
-*.tsbuildinfo
+# macOS
+.DS_Store
+
+# editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.vssscc
+.npmrc
+
+# build outputs
+/dist
+/build
+/web-build
+/cache

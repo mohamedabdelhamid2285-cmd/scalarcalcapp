@@ -18,6 +18,7 @@ interface CalculatorState {
   selectedVariable: string | null; // Currently selected variable (A, B, C, X, Y)
   variables: { [key: string]: number }; // Store variables (A, B, C, X, Y)
   calculationCount: number; // Track calculation count for ad display
+  locale: string; // Add locale for formatting
 }
 
 type CalculatorAction =
@@ -43,6 +44,7 @@ type CalculatorAction =
   | { type: 'CLEAR_VARIABLES' } // Action to clear all variables
   | { type: 'INCREMENT_CALCULATION_COUNT' } // Action to increment calculation count
   | { type: 'RESET_CALCULATION_COUNT' } // Action to reset calculation count
+  | { type: 'SET_LOCALE'; payload: string }; // Action to set locale
 
 const initialState: CalculatorState = {
   expression: '',
@@ -66,13 +68,14 @@ const initialState: CalculatorState = {
     'Y': 0,
   },
   calculationCount: 0, // Initialize calculation count
+  locale: 'en-US', // Default locale for number formatting
 };
 
 // Helper function to check if a character is an operator
 const isOperator = (char: string) => ['+', '-', '*', '/', '%', '^'].includes(char);
 
 // Helper function to check if a character is a function
-const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log', 'sqrt', 'log10', 'pi', 'e', 'nthRoot'].includes(char);
+const isFunction = (char: string) => ['sin', 'cos', 'tan', 'log', 'sqrt', 'log10', 'pi', 'e', 'nthRoot', 'cbrt', 'asin', 'acos', 'atan', 'pow', 'exp', 'log10', 'log'].includes(char);
 
 const calculatorReducer = (state: CalculatorState, action: CalculatorAction): CalculatorState => {
   // Initialize mathjs instance for evaluation
@@ -90,6 +93,23 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
     recallModeActive: false,
     selectedVariable: null,
   });
+
+  // Helper to format numbers based on locale
+  const formatNumber = (num: number | string): string => {
+    try {
+      const numberValue = typeof num === 'string' ? parseFloat(num) : num;
+      if (isNaN(numberValue)) return String(num); // Return as is if not a valid number
+
+      // Use Intl.NumberFormat for locale-specific formatting
+      return new Intl.NumberFormat(state.locale, {
+        useGrouping: true, // Enable grouping (thousands separators)
+        maximumFractionDigits: 14, // Match mathjs precision
+      }).format(numberValue);
+    } catch (e) {
+      console.error("Error formatting number:", e);
+      return String(num); // Fallback to string representation
+    }
+  };
 
   switch (action.type) {
     case 'NUMBER_PRESS': {
@@ -204,6 +224,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         angleUnit: state.angleUnit,
         memoryValue: state.memoryValue,
         variables: state.variables, // Preserve variables on clear
+        locale: state.locale, // Preserve locale on clear
         ...resetVariableModes(), // Ensure modes are reset on clear
       };
 
@@ -293,7 +314,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
     case 'MEMORY_RECALL':
       return {
         ...state,
-        expression: state.expression + state.memoryValue.toString(),
+        expression: state.expression + formatNumber(state.memoryValue),
         lastInputType: 'number',
         error: null,
         ...resetVariableModes(),
@@ -317,7 +338,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
 
     case 'TOGGLE_ALPHA':
       return {
-        ...state,
+        ...state, // Corrected spread syntax
         isAlphaModeActive: !state.isAlphaModeActive,
         storeModeActive: false, // Turn off other modes
         recallModeActive: false,
@@ -370,7 +391,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
               [variableName]: valueToStore,
             },
             expression: '', // Clear expression after storing
-            result: math.format(valueToStore, { precision: 14 }), // Display the stored value as result
+            result: formatNumber(valueToStore), // Display the stored value as result
             error: null,
           };
         } catch (error) {
@@ -432,6 +453,14 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
         calculationCount: 0,
       };
 
+    case 'SET_LOCALE':
+      return {
+        ...state,
+        locale: action.payload,
+        error: null,
+        ...resetVariableModes(),
+      };
+
     case 'EQUALS':
       try {
         if (!state.expression) return state;
@@ -453,7 +482,7 @@ const calculatorReducer = (state: CalculatorState, action: CalculatorAction): Ca
 
         return {
           ...state,
-          result: formattedResult,
+          result: formatNumber(formattedResult), // Format the result
           expression: '',
           history: newHistory,
           error: null,
