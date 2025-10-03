@@ -16,7 +16,7 @@ export default function RootLayout() {
           const adapterStatuses = await mobileAds().initialize();
           console.log('Google Mobile Ads initialized:', adapterStatuses);
         } catch (error) {
-          console.error('Failed to initialize Google Mobile Ads:', error);
+          console.log('Google Mobile Ads not available in Expo Go - development build required');
         }
       };
 
