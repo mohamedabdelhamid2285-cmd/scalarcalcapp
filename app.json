@@ -15,7 +15,9 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      // Add iOS App ID here
+      "bundleIdentifier": "com.itmo.scalarcalcapp"
     },
     
     "android": {
@@ -32,11 +34,18 @@
     },
     
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      // Disable ads on web by not including app IDs
+      "config": {
+        "googleMobileAdsAppId": null 
+      }
     },
     "extra": {
       "scalarCalcBanners": "ca-app-pub-4737600375746657/3340175596",
       "scalarCalcInterstitial": "ca-app-pub-4737600375746657/9979899277",
+      // Provide placeholder IDs for Android and iOS
+      "scalarCalcAndroidAppId": "ca-app-pub-4737600375746657~8858389291",
+      "scalarCalcIosAppId": "ca-app-pub-4737600375746657~8858389291",
       "router": {},
       "eas": {
         "projectId": "3fb9df95-35cc-440c-b92f-abf8568339fc"
