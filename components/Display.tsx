@@ -21,19 +21,9 @@ import React from 'react';
       displayedExpression = displayedExpression.replace(/nthRoot\(/g, 'y√x(');
       displayedExpression = displayedExpression.replace(/log\(/g, 'ln(');
 
-      // Format the expression with thousands separators
+      // No formatting needed - just display the expression as-is
       const formatExpression = (expr: string): string => {
-        if (expr === '' || expr === '0') return expr;
-        try {
-          // Use Intl.NumberFormat for locale-specific formatting
-          return new Intl.NumberFormat(state.locale, {
-            useGrouping: true, // Enable grouping (thousands separators)
-            maximumFractionDigits: 14, // Match mathjs precision
-          }).format(parseFloat(expr));
-        } catch (e) {
-          console.error("Error formatting expression:", e);
-          return expr; // Fallback to original expression
-        }
+        return expr;
       };
 
       return (
