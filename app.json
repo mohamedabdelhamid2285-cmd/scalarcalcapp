@@ -53,8 +53,6 @@
     },
     
     "plugins": [
-      // ⚠️ 2. إضافة مُعرّف AdMob باستخدام Manifest Placeholders
-      // هذا يُجبر مُعرّف التطبيق على الدخول في Manifest بشكل مباشر
       [
         "expo-build-properties",
         {
@@ -70,9 +68,13 @@
       "expo-font",
       "expo-router",
       "expo-web-browser",
-      
-      // ⚠️ 3. إضافة المكوّن الإضافي الخاص بالإعلانات (لربط المكتبات)
-      "react-native-google-mobile-ads"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4737600375746657~8858389291",
+          "iosAppId": "ca-app-pub-4737600375746657~8858389291"
+        }
+      ]
     ]
   }
 }
